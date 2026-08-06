@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#17bdef">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>IBF — نظام المتطوعين والمشاريع</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.3.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.3.0/firebase-auth-compat.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+  :root{--primary:#17bdef;--primary-dark:#0f9bc7;--primary-darker:#0b7ea3;--accent:#f5a623;--danger:#e2574c;--radius:12px;--font:'Cairo',Tahoma,Arial,sans-serif;}
+  [data-theme="light"]{--bg:#eef4f7;--card:#fff;--text:#16313c;--muted:#6b7d86;--border:#dde7ec;--soft:#f0f6f9;--shadow:0 1px 3px rgba(0,0,0,.06);--th-bg:#e8f4fa;--track:#e3edf1}
+  [data-theme="dark"]{--bg:#0e1a20;--card:#15252e;--text:#e6eef2;--muted:#90a4b0;--border:#243843;--soft:#1a2c36;--shadow:0 1px 4px rgba(0,0,0,.4);--th-bg:#1c2f3a;--track:#22343f}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;transition:background .25s,color .25s}
+  #app{min-height:100vh}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--primary);color:#fff;padding:8px 16px;flex-wrap:wrap}
+  .topbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-inline-start:auto}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700}
+  .brand img{height:38px;width:38px;border-radius:8px;object-fit:cover}
+  .nav{display:flex;gap:6px;flex-wrap:wrap}
+  .nav button{color:#fff;background:transparent;border:none;padding:7px 13px;border-radius:8px;cursor:pointer;font-size:.92rem;font-family:inherit}
+  .nav button:hover,.nav button.active{background:rgba(255,255,255,.22)}
+  .topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .user-chip{font-size:.8rem;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:20px}
+  .btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:.82rem;font-family:inherit}
+  .btn-ghost:hover{background:rgba(255,255,255,.18)}
+  .container{max-width:1120px;margin:0 auto;padding:24px 18px}
+  .page-title{margin-bottom:18px;font-weight:800}
+  .flash{padding:11px 16px;border-radius:8px;margin-bottom:14px;font-size:.92rem}
+  .flash-success{background:rgba(23,189,239,.12);color:var(--primary-darker);border:1px solid rgba(23,189,239,.4)}
+  .flash-error{background:rgba(226,87,76,.12);color:var(--danger);border:1px solid rgba(226,87,76,.4)}
+  .notice{background:rgba(245,166,35,.12);color:var(--accent);border:1px solid rgba(245,166,35,.4);padding:9px 14px;border-radius:8px;font-size:.85rem;margin-bottom:14px}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow)}
+  .stat-num{font-size:1.9rem;font-weight:800;color:var(--primary)}
+  .stat-label{color:var(--muted);font-size:.86rem;margin-top:4px}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
+  .panel h2{font-size:1.05rem;margin-bottom:16px;font-weight:700}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .chart-box{position:relative;height:230px}
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+  .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end}
+  .grid-form textarea{grid-column:1/-1;min-height:70px;resize:vertical}
+  label.fld{display:flex;flex-direction:column;gap:4px;font-size:.76rem;color:var(--muted)}
+  input,select,textarea{font-family:var(--font);font-size:.92rem;padding:10px 12px;border:1px solid var(--border);border-radius:8px;width:100%;background:var(--card);color:var(--text)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--primary);border-color:var(--primary)}
+  button{font-family:var(--font);cursor:pointer;border:none;border-radius:8px;font-size:.92rem}
+  .btn-primary{background:var(--primary);color:#fff;padding:11px 20px}
+  .btn-primary:hover{background:var(--primary-dark)}
+  .btn-secondary{background:var(--accent);color:#fff;padding:9px 15px}
+  .btn-secondary:hover{filter:brightness(.96)}
+  .btn-danger-sm{background:var(--danger);color:#fff;padding:6px 11px;font-size:.78rem}
+  .data-table{width:100%;border-collapse:collapse}
+  .data-table th,.data-table td{padding:10px 12px;text-align:start;border-bottom:1px solid var(--border)}
+  .data-table th{background:var(--th-bg);font-size:.85rem;font-weight:700}
+  .stars{color:var(--accent)}.muted{color:var(--muted);text-align:center;padding:18px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .cards-projects{grid-template-columns:1fr;gap:20px}
+  .folders{display:flex;flex-direction:column;gap:10px}
+  .folder-card{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--card);cursor:pointer;transition:.15s}
+  .folder-card:hover{border-color:var(--primary);box-shadow:0 3px 14px rgba(23,189,239,.15);transform:translateY(-1px)}
+  .folder-icon{font-size:1.8rem;line-height:1}.folder-body{flex:1;min-width:0}
+  .folder-name{font-weight:700;font-size:1.05rem}.folder-sub{font-size:.82rem;color:var(--muted);margin-top:2px}
+  .folder-arrow{font-size:1.6rem;color:var(--muted);transform:scaleX(-1)}
+  .detail-top{margin-bottom:6px}
+  .cv-wrap{margin-top:14px;border-top:1px dashed var(--border);padding-top:12px}
+  .cv-head{font-weight:700;font-size:.9rem;margin-bottom:10px;color:var(--primary-darker)}
+  .add-cv{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .add-cv input{flex:1;min-width:120px;font-size:.85rem;padding:8px 10px}
+  .add-cv button{white-space:nowrap}
+  .cv-item{border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:8px;background:var(--soft)}
+  .cv-item>summary{cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;list-style:none}
+  .cv-item>summary::-webkit-details-marker{display:none}
+  .cv-name{flex:1}.cv-qr{padding:4px 10px;font-size:.75rem}
+  .project-card{border:1px solid var(--border);border-radius:var(--radius);padding:18px;background:var(--card)}
+  .project-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .project-head h3{font-size:1.02rem;font-weight:700}
+  .badge{background:var(--primary);color:#fff;border-radius:20px;padding:3px 10px;font-size:.76rem}
+  .project-meta{list-style:none;font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .auth-card{max-width:380px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:34px;box-shadow:0 6px 22px rgba(0,0,0,.12);text-align:center}
+  .auth-logo{width:84px;height:84px;border-radius:18px;margin:0 auto 18px;display:block;object-fit:cover}
+  .auth-card h1{font-size:1.3rem;margin-bottom:20px;font-weight:800}
+  .auth-card form{display:flex;flex-direction:column;gap:12px;text-align:start}
+  .auth-card label{font-size:.82rem;color:var(--muted)}
+  .auth-card .btn-primary{margin-top:8px}
+  .auth-foot{margin-top:18px;font-size:.9rem}
+  .auth-foot a{color:var(--primary);font-weight:600;cursor:pointer}
+  .hint{font-size:.76rem;color:var(--muted);margin-top:14px;background:var(--soft);padding:9px;border-radius:8px;line-height:1.5}
+  .access-list{display:flex;flex-direction:column;gap:10px}
+  .access-row{border:1px solid var(--border);border-radius:10px;padding:12px}
+  .access-row h4{font-size:.93rem;margin-bottom:8px;font-weight:700}
+  .chk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+  .chk{display:flex;align-items:center;gap:6px;font-size:.84rem;color:var(--muted)}
+  .chk input{width:auto}
+  .pill{display:inline-block;background:var(--soft);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:.74rem;color:var(--muted)}
+  .qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+  .qr-modal{background:var(--card);color:var(--text);border-radius:var(--radius);padding:26px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .qr-modal h3{font-weight:800;margin-bottom:4px}
+  .qr-box{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:10px;min-height:230px;align-items:center}
+
+  /* ── Toggle Switch ── */
+  .toggle{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+  .toggle input{opacity:0;width:0;height:0}
+  .toggle .slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:20px;transition:.2s}
+  .toggle .slider:before{content:"";position:absolute;height:16px;width:16px;right:2px;bottom:2px;background:#fff;border-radius:50%;transition:.2s}
+  .toggle input:checked+.slider{background:var(--primary)}
+  .toggle input:checked+.slider:before{transform:translateX(-16px)}
+  /* ── User Cards (Odoo-style) ── */
+  .user-profile{border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:16px;background:var(--card);overflow:hidden}
+  .user-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .user-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;color:#fff;flex-shrink:0}
+  .user-info{flex:1;min-width:0}
+  .user-info h3{font-size:1.05rem;font-weight:700;margin-bottom:2px}
+  .user-info .meta{font-size:.78rem;color:var(--muted)}
+  .user-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .user-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--soft)}
+  .user-tab{padding:10px 18px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:inherit;border-bottom:2px solid transparent;transition:.15s}
+  .user-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--card)}
+  .user-tab:hover{color:var(--primary)}
+  .user-body{padding:18px 20px}
+  .user-section{margin-bottom:16px}
+  .user-section-title{font-size:.8rem;font-weight:700;color:var(--primary-darker);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:600px){.perm-grid{grid-template-columns:1fr}}
+  .perm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;background:var(--soft);font-size:.82rem}
+  .perm-row label{font-weight:600;color:var(--text)}
+  .perm-row select,.perm-row input[type=checkbox]{font-size:.78rem}
+  .edit-field{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .edit-field label{font-size:.78rem;color:var(--muted);min-width:80px}
+  .edit-field input{font-size:.85rem;padding:6px 10px;border-radius:6px;flex:1}
+  .btn-sm{font-size:.78rem;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-weight:600}
+  .btn-reset{background:#e8f4fa;color:var(--primary-darker)}
+  .btn-edit{background:var(--soft);color:var(--text);border:1px solid var(--border)}
+  /* ── Enhanced Global Styling ── */
+  .topbar{font-size:.9rem;padding:10px 18px}
+  .brand span{font-size:.95rem}
+  .nav button{font-size:.84rem;padding:6px 12px;border-radius:6px;transition:.15s}
+  .btn-primary{border-radius:10px;font-weight:700;font-size:.9rem;padding:10px 18px;transition:.2s}
+  .btn-secondary{border-radius:10px;font-weight:600;font-size:.82rem;padding:8px 14px;transition:.2s}
+  .btn-danger-sm{border-radius:8px;font-weight:600;font-size:.75rem;padding:5px 10px}
+  .btn-ghost{font-size:.8rem;padding:5px 10px;border-radius:6px}
+
+  /* Tables */
+  .data-table{font-size:.85rem}
+  .data-table th{font-size:.78rem;font-weight:700;padding:8px 10px;white-space:nowrap;text-align:center}
+  .data-table td{padding:8px 10px;font-size:.83rem;text-align:center;vertical-align:middle}
+  .data-table tr:hover{background:var(--soft)}
+
+  /* Forms */
+  .grid-form{gap:10px}
+  .grid-form input,.grid-form select{font-size:.85rem;padding:9px 11px;border-radius:8px}
+  .grid-form button{white-space:nowrap}
+  label.fld{font-size:.74rem;font-weight:600}
+
+  /* Cards & Panels */
+  .panel{padding:18px;border-radius:14px}
+  .panel h2{font-size:1rem;margin-bottom:12px}
+  .stat-card{border-radius:14px;padding:16px}
+  .stat-num{font-size:1.6rem}
+  .stat-label{font-size:.78rem}
+
+  /* Folders */
+  .folder-card{border-radius:12px;padding:12px 14px;gap:12px}
+  .folder-name{font-size:.98rem}
+  .folder-sub{font-size:.78rem}
+
+  /* Auth */
+  .auth-card{border-radius:16px;padding:28px}
+  .auth-card h1{font-size:1.2rem}
+  .auth-card input{font-size:.9rem;padding:10px 12px}
+
+  /* Toolbar */
+  .toolbar{gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .toolbar input[type=file]{font-size:.78rem;max-width:180px}
+
+  /* Pills & Badges */
+  .pill{font-size:.72rem;padding:2px 8px;border-radius:16px}
+  .badge{font-size:.72rem;padding:2px 9px}
+
+  /* Add-cv forms (caravan/member/expense) */
+  .add-cv{gap:6px;flex-wrap:wrap;align-items:end}
+  .add-cv input,.add-cv select{font-size:.82rem;padding:8px 10px;border-radius:8px;min-width:100px}
+  .add-cv button{font-size:.8rem;padding:8px 14px}
+
+  /* CV items (caravans) */
+  .cv-item{border-radius:10px;margin-bottom:6px}
+  .cv-item>summary{font-size:.9rem;gap:8px;padding:4px 0}
+  .cv-qr,.cv-exp,.cv-del{font-size:.7rem!important;padding:3px 8px!important;border-radius:6px!important}
+
+  /* Access rows */
+  .access-row{border-radius:12px;padding:14px;margin-bottom:10px}
+  .chk{font-size:.8rem}
+  .chk-grid{gap:6px}
+
+  /* Flash messages */
+  .flash{font-size:.85rem;border-radius:10px;padding:10px 14px}
+
+  /* Hints */
+  .hint{font-size:.74rem;border-radius:8px;padding:8px 10px}
+
+  /* Responsive */
+  @media(max-width:600px){
+    .topbar{padding:8px 12px;gap:8px}
+    .brand span{font-size:.82rem}
+    .nav button{font-size:.76rem;padding:5px 8px}
+    .container{padding:14px 10px}
+    .panel{padding:14px}
+    .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    .stat-card{padding:12px}
+    .stat-num{font-size:1.3rem}
+    .data-table th,.data-table td{padding:6px 4px;font-size:.72rem}
+    .grid-form{grid-template-columns:1fr}
+    .add-cv{flex-direction:column}
+    .add-cv input,.add-cv select{min-width:100%}
+    .toolbar{flex-direction:column;align-items:stretch}
+    .toolbar input,.toolbar button{width:100%}
+    .folder-card{padding:10px}
+    .cv-item>summary{flex-wrap:wrap}
+  }
+
+  /* Scrollable tables on mobile */
+  .panel:has(.data-table){overflow-x:auto}
+
+  /* Better select styling */
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7d86' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;padding-left:28px}
+  [dir=rtl] select{background-position:left 10px center;padding-left:28px;padding-right:12px}
+</style>
+</head>
+<body>
+<div id="app"><div class="auth-wrap"><div class="muted">...جارٍ التحميل / Loading</div></div></div>
+<div id="qrOverlay" class="qr-overlay" style="display:none">
+  <div class="qr-modal">
+    <h3 id="qrTitle"></h3>
+    <p id="qrSub" class="muted" style="padding:0;margin-bottom:12px"></p>
+    <div id="qrBox" class="qr-box"></div>
+    <p id="qrUrl" dir="ltr" style="font-size:.7rem;color:var(--muted);word-break:break-all;margin:12px 0"></p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn-primary" id="qrDownload"></button>
+      <button class="btn-ghost" id="qrClose" style="color:var(--text);border-color:var(--border)"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyAaFSXhHkkDrNHw_JtIM0e3tdOYY5LLtZc",authDomain:"ibf-volunteer.firebaseapp.com",projectId:"ibf-volunteer",storageBucket:"ibf-volunteer.firebasestorage.app",messagingSenderId:"125113107942",appId:"1:125113107942:web:0515b010f7ccae04588227",measurementId:"G-NG24PTR0Y5"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+
+const FS_PROJECT='ibf-volunteer';
+const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FS_PROJECT+'/databases/(default)/documents';
+async function _tok(){return firebase.auth().currentUser.getIdToken();}
+function _toFV(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==='boolean')return{booleanValue:v};if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==='string')return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_toFV)}};if(typeof v==='object'){const f={};for(const k in v)if(v.hasOwnProperty(k))f[k]=_toFV(v[k]);return{mapValue:{fields:f}};}return{stringValue:String(v)};}
+function _fromFV(v){if(!v)return null;if('nullValue' in v)return null;if('booleanValue' in v)return v.booleanValue;if('integerValue' in v)return Number(v.integerValue);if('doubleValue' in v)return v.doubleValue;if('stringValue' in v)return v.stringValue;if('arrayValue' in v)return(v.arrayValue.values||[]).map(_fromFV);if('mapValue' in v){const o={};for(const k in(v.mapValue.fields||{}))o[k]=_fromFV(v.mapValue.fields[k]);return o;}return null;}
+function _docParse(d){const o={id:d.name.split('/').pop()};for(const k in(d.fields||{}))o[k]=_fromFV(d.fields[k]);return o;}
+function _objFields(o){const f={};for(const k in o)if(k!=='id')f[k]=_toFV(o[k]);return f;}
+
+async function restGet(col,docId){const t=await _tok();const r=await fetch(FS_BASE+'/'+col+'/'+docId,{headers:{'Authorization':'Bearer '+t}});if(r.status===404)return null;if(!r.ok)throw new Error('GET '+r.status+': '+(await r.text()).slice(0,200));return _docParse(await r.json());}
+async function restList(col){const t=await _tok();const docs=[];let pt='';do{const u=FS_BASE+'/'+col+'?pageSize=300'+(pt?'&pageToken='+pt:'');const r=await fetch(u,{headers:{'Authorization':'Bearer '+t}});if(!r.ok)throw new Error('LIST '+r.status+': '+(await r.text()).slice(0,200));const j=await r.json();(j.documents||[]).forEach(d=>docs.push(_docParse(d)));pt=j.nextPageToken||'';}while(pt);return docs;}
+async function restAdd(col,data){const t=await _tok();const r=await fetch(FS_BASE+'/'+col,{method:'POST',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({fields:_objFields(data)})});if(!r.ok)throw new Error('ADD '+r.status+': '+(await r.text()).slice(0,200));return _docParse(await r.json());}
+async function restSet(col,docId,data){const t=await _tok();const r=await fetch(FS_BASE+'/'+col+'/'+docId,{method:'PATCH',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({fields:_objFields(data)})});if(!r.ok)throw new Error('SET '+r.status+': '+(await r.text()).slice(0,200));}
+async function restUpdate(col,docId,data){const t=await _tok();const mask=Object.keys(data).filter(k=>k!=='id').map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');const r=await fetch(FS_BASE+'/'+col+'/'+docId+'?'+mask,{method:'PATCH',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({fields:_objFields(data)})});if(!r.ok)throw new Error('UPD '+r.status+': '+(await r.text()).slice(0,200));}
+async function restDel(col,docId){const t=await _tok();const r=await fetch(FS_BASE+'/'+col+'/'+docId,{method:'DELETE',headers:{'Authorization':'Bearer '+t}});if(!r.ok&&r.status!==404)throw new Error('DEL '+r.status+': '+(await r.text()).slice(0,200));}
+
+let _secondary=null;
+function secondaryAuth(){if(!_secondary){const app=firebase.apps.find(a=>a.name==="secondary")||firebase.initializeApp(firebaseConfig,"secondary");_secondary=app.auth();}return _secondary;}
+
+const LOGO="icon-192.png";
+const CONFIG={GS_URL:"https://script.google.com/macros/s/AKfycbxN9fBM_aYvmHtx6euPCCFZN_eTcUpf27Zl3vq4FjSSNMzhj1SVQz-KC4R-pQZHgMVorA/exec"};
+const effGs=()=>(settings&&settings.gsUrl)?settings.gsUrl:CONFIG.GS_URL;
+const CONVOY_ROLES=["Leader","Controller","بوابة الدخول / Entrance Control","التذاكر / Registration","Data Entry Control","Relay 1","Relay 2","تنظيم التوعية / Awareness Control","منظم مبنى العيادات / Clinic Building Controller","Lab","الأطفال / Pediatric (1)","الأطفال / Pediatric (2)","سونار / Sonar","الأنف والأذن / ENT","عظام / Orthopedic","الجلدية / Dermatology","OPHTHALMOLOGY a door","OPHTHALMOLOGY chart","OPHTHALMOLOGY auto ref","Pharmacy Inside","توزيع العلاج / Pharmacy Outside","منظم توزيع العلاج / Controller Pharmacy","بوابة الخروج / Exit Gate"];
+const GOVS=["القاهرة","الجيزة","الإسكندرية","الدقهلية","البحر الأحمر","البحيرة","الفيوم","الغربية","الإسماعيلية","المنوفية","المنيا","القليوبية","الوادي الجديد","السويس","أسوان","أسيوط","بني سويف","بورسعيد","دمياط","الشرقية","جنوب سيناء","كفر الشيخ","مطروح","الأقصر","قنا","شمال سيناء","سوهاج"];
+
+const I18N={
+ ar:{org:"مؤسسة إبراهيم بدران / IBF Foundation",dashboard:"لوحة المعلومات / Dashboard",volunteers:"المتطوعون / Volunteers",projects:"القوافل / Convoys",users:"المستخدمون / Users",logout:"خروج / Logout",login_title:"تسجيل الدخول / Login",email:"البريد الإلكتروني / Email",password:"كلمة المرور / Password",login_btn:"دخول / Sign in",no_account:"ليس لديك حساب؟ / No account?",register:"تسجيل مستخدم جديد / Register",register_title:"تسجيل مستخدم جديد / New User",create_account:"إنشاء حساب / Create Account",back_login:"العودة لتسجيل الدخول / Back to Login",volunteers_count:"المتطوعون / Volunteers",projects_count:"القوافل / Convoys",cases_count:"إجمالي الحالات / Total Cases",exams_count:"إجمالي الكشوفات / Total Exams",avg_commit:"متوسط الالتزام / Avg Commitment",assigned_vol:"متطوعون مرتبطون / Assigned",unassigned_vol:"بدون قافلة / Unassigned",per_project:"المتطوعون لكل قافلة / Volunteers per Convoy",commit_dist:"توزيع درجات الالتزام / Commitment Dist.",by_gov:"القوافل حسب المحافظة / Convoys by Gov.",cases_per_proj:"الحالات لكل قافلة / Cases per Convoy",top_vol:"أعلى المتطوعين التزامًا / Top Volunteers",no_projects:"لا توجد قوافل. / No convoys.",no_data:"لا توجد بيانات. / No data.",import:"استيراد Excel / Import",export:"تصدير Excel / Export",search_ph:"🔍 بحث بالكود أو الاسم أو التليفون أو البطاقة... / Search...",add_volunteer:"إضافة متطوع / Add Volunteer",no_project:"— بدون قافلة — / — No convoy —",add:"إضافة / Add",name:"الاسم / Name",code:"الكود / Code",phone:"التليفون / Phone",national_id:"البطاقة / ID",commitment:"الالتزام / Commitment",project:"القافلة / Convoy",delete:"حذف / Delete",new_project:"إنشاء قافلة جديدة / New Convoy",create:"إنشاء / Create",projects_list:"قائمة القوافل / Convoys List",vol_short:"متطوع / vol.",f_name:"الاسم رباعي / Full Name",f_code:"الكود (V010) / Code",f_phone:"رقم التليفون / Phone",f_id:"رقم البطاقة / ID Number",f_score:"الالتزام 1-5 / Score",p_name:"اسم القافلة / Convoy Name",p_date:"تاريخ القافلة / Date",p_gov:"المحافظة / Governorate",p_fund:"الممول / Funder",p_loc:"مكان القافلة / Location",p_sup:"مسؤول المتطوعين / Supervisor",p_team:"الفريق / Team",p_cases:"إجمالي الحالات / Cases",p_exams:"إجمالي الكشوفات / Exams",p_notes:"التحديات / النتائج / الاقتراحات",select_gov:"— اختر المحافظة — / Select Gov.",access_title:"صلاحيات المستخدمين / User Permissions",access_hint:"حدّد القوافل التي يراها كل مستخدم. / Set convoy access per user.",save:"حفظ / Save",role:"الصلاحية / Role",my_projects:"قوافلي / My Convoys",none_assigned:"لم يتم ربطك بأي قافلة — تواصل مع الأدمن. / Not linked to any convoy.",examined:"كشوفات / Exams",cases:"حالات / Cases",efficiency:"معدل الكشف لكل متطوع / Exams per Vol.",sees_all:"يرى كل القوافل. / Sees all convoys.",demo_note:"البيانات على Firebase وتتزامن لحظيًا. / Data on Firebase, syncs live.",reg_note:"سيُنشأ الحساب كمستخدم عادي. / Created as regular user.",settings:"الإعدادات / Settings",qr:"رمز QR / QR Code",download:"تحميل / Download",close:"إغلاق / Close",form_url:"رابط فورم التسجيل / Form URL",gs_url:"رابط Apps Script / GS URL",gs_token:"رمز سري / Secret Token",autosync:"مزامنة تلقائية / Auto-sync",sync_now:"مزامنة الآن / Sync Now",last_sync:"آخر مزامنة / Last Sync",live:"مباشر / Live",qr_hint:"اطبع الرمز وضعه في القافلة؛ المتطوع يمسحه ليسجّل حضوره. / Print QR for attendance.",set_form_first:"اضبط رابط الفورم أولًا. / Set form URL first.",settings_saved:"تم حفظ الإعدادات / Settings Saved",sync_done:"تمت المزامنة / Synced",sync_off:"اضبط رابط Apps Script أولًا. / Set GS URL first.",scan_to_join:"امسح للتسجيل في القافلة / Scan to Join",vpp_title:"المتطوعون المسجّلون لكل قافلة / Registered per Convoy",vpp_none:"لا يوجد متطوعون مسجّلون بعد. / No volunteers yet.",caravan:"القافلة / Convoy",caravans:"القوافل / Convoys",add_caravan:"إضافة قافلة / Add Convoy",caravan_name:"اسم القافلة / Convoy Name",no_caravans:"لا توجد قوافل بعد. / No convoys yet.",unassigned_cv:"بدون قافلة محددة / Unassigned",sel_toggle:"تحديد للحذف / Select to Delete",sel_cancel:"إلغاء التحديد / Cancel",del_selected:"حذف المحدد / Delete Selected",sel_none:"اختر متطوعين أولًا / Select first",vols_count:"متطوع / vol.",can_delete:"صلاحية الحذف / Delete Perm.",role_admin:"أدمن / Admin",role_user:"مستخدم / User",the_role:"الصلاحية / Role",clinics:"العيادات / Clinics",new_clinic:"عيادة جديدة / New Clinic",clinic_name:"اسم العيادة / Clinic Name",city:"المدينة / City",clinics_list:"قائمة العيادات / Clinics List",no_clinics:"لا توجد عيادات بعد. / No clinics yet.",cl_members:"الأعضاء (متطوعون ثابتون) / Members",add_member:"إضافة عضو / Add Member",member_name:"اسم المتطوع / Volunteer Name",allowance:"البدل / Allowance",add_allowance:"تسجيل بدل / Log Allowance",amount:"المبلغ (ج.م) / Amount (EGP)",a_date:"التاريخ / Date",a_note:"ملاحظة / Note",monthly_report:"التقرير الشهري / Monthly Report",the_month:"الشهر / Month",total:"الإجمالي / Total",entries_log:"سجل البدلات / Allowances Log",select_all:"تحديد الكل / Select All",no_del_perm:"ليس لديك صلاحية الحذف / No delete permission",clinic_fund:"الممول / Funder",no_members:"لا يوجد أعضاء بعد. / No members.",no_entries:"لا توجد بدلات مسجّلة. / No entries.",visits_count:"نزول / Visits",db_section:"قاعدة البيانات / Database (Backup)",export_all_xlsx:"تصدير قاعدة البيانات / Export DB (Excel)",backup_json:"⬇ نسخة احتياطية / Backup",restore_json:"استعادة من نسخة / Restore",restored:"تمت الاستعادة بنجاح / Restored",backup_hint:"نزّل نسخة احتياطية بكل البيانات. / Download a full backup.",restore_confirm:"سيتم استبدال كل البيانات. متابعة؟ / Replace all data?",restore_btn:"استعادة من ملف / Restore",restore_fail:"تعذّر قراءة الملف. / Could not read file.",gender_dist:"نسبة الذكور والإناث / Gender Distribution",male:"ذكر / Male",female:"أنثى / Female",convoy_expenses:"مصاريف القافلة / Convoy Expenses",add_expense:"تسجيل مصاريف / Add Expense",person_name:"اسم الشخص / Person",person_role:"الدور / Role",vol_role:"متطوع / Volunteer",leader_role:"ليدر / Leader",meal_allow:"بدل وجبة / Meal",travel_allow:"بدل سفر / Travel",transport_allow:"بدل انتقال / Transport",expense_total:"إجمالي المصاريف / Total Expenses",no_expenses:"لا توجد مصاريف مسجّلة. / No expenses.",exp_note:"ملاحظة / Note",bank:"البنك / Bank",account_no:"رقم الحساب / Account",job:"الوظيفة / Job",import_clinic:"استيراد بيانات العيادة / Import Clinic",export_clinic_report:"تقرير العيادة / Clinic Report",convoy_report:"تقرير القافلة / Convoy Report",attendance:"الحضور / Attendance",skills:"المهارات / Skills",skills_dist:"توزيع المهارات / Skills Distribution",custom_report:"تقرير مخصص / Custom Report",generate:"إنشاء / Generate",select_fields:"اختر الحقول / Select Fields",filter_by:"تصفية حسب / Filter by",screen_access:"صلاحيات الشاشات / Screen Access",team_leader:"تيم ليدر / Team Leader",volunteer_role:"متطوع (عرض فقط) / Volunteer (View Only)",clinic_role:"الدور في العيادة / Clinic Role",events:"الأحداث / Events",new_event:"حدث جديد / New Event",event_name:"اسم الحدث / Event Name",event_date:"التاريخ / Date",event_loc:"المكان / Location",event_desc:"الوصف / Description",event_status:"الحالة / Status",status_planned:"مخطط / Planned",status_active:"جاري / Active",status_done:"منتهي / Done",status_cancelled:"ملغي / Cancelled",no_events:"لا توجد أحداث بعد. / No events yet.",events_list:"قائمة الأحداث / Events List",event_type:"النوع / Type",type_convoy:"قافلة / Convoy",type_training:"تدريب / Training",type_meeting:"اجتماع / Meeting",type_other:"أخرى / Other"},
+ en:{org:"Ibrahim Badran Foundation",dashboard:"Dashboard",volunteers:"Volunteers",projects:"Convoys",users:"Users",logout:"Logout",login_title:"Login",email:"Email",password:"Password",login_btn:"Sign in",no_account:"No account?",register:"Register",register_title:"Register new user",create_account:"Create account",back_login:"Back to login",volunteers_count:"Volunteers",projects_count:"Convoys",cases_count:"Total cases",exams_count:"Total exams",avg_commit:"Avg commitment",assigned_vol:"Assigned volunteers",unassigned_vol:"Unassigned",per_project:"Volunteers per convoy",commit_dist:"Commitment distribution",by_gov:"Convoys by governorate",cases_per_proj:"Cases per convoy",top_vol:"Top committed volunteers",no_projects:"No convoys.",no_data:"No data.",import:"Import Excel",export:"Export Excel",search_ph:"🔍 Search by code, name, phone, or ID...",add_volunteer:"Add volunteer",no_project:"— No convoy —",add:"Add",name:"Name",code:"Code",phone:"Phone",national_id:"ID",commitment:"Commitment",project:"Convoy",delete:"Delete",new_project:"Create new convoy",create:"Create",projects_list:"Convoys list",vol_short:"vol.",f_name:"Full name",f_code:"Code (V010)",f_phone:"Phone",f_id:"ID number",f_score:"Commitment 1-5",p_name:"Convoy name",p_date:"Convoy date",p_gov:"Governorate",p_fund:"Funder",p_loc:"Location",p_sup:"Supervisor",p_team:"Team",p_cases:"Total cases",p_exams:"Total exams",p_notes:"Challenges / results / suggestions",select_gov:"— Select governorate —",access_title:"User access to convoys",access_hint:"Choose which convoys each user can see.",save:"Save",role:"Role",my_projects:"My Convoys",none_assigned:"You're not linked to any convoy yet.",examined:"exams",cases:"cases",efficiency:"Exams per volunteer",sees_all:"Sees all convoys.",demo_note:"Data on Firebase, syncs live across devices.",reg_note:"Account created as regular user.",settings:"Settings",qr:"QR code",download:"Download",close:"Close",form_url:"Registration form URL",gs_url:"Google Apps Script URL",gs_token:"Secret token",autosync:"Live auto-sync",sync_now:"Sync now",last_sync:"Last sync",live:"Live",qr_hint:"Print QR for volunteer attendance.",set_form_first:"Set form URL in Settings first.",settings_saved:"Settings saved",sync_done:"Synced",sync_off:"Set GS URL in Settings first.",scan_to_join:"Scan to join the convoy",vpp_title:"Registered volunteers per convoy",vpp_none:"No registered volunteers yet.",caravan:"Convoy",caravans:"Convoys",add_caravan:"Add convoy",caravan_name:"Convoy name",no_caravans:"No convoys yet.",unassigned_cv:"Unassigned",sel_toggle:"Select to delete",sel_cancel:"Cancel selection",del_selected:"Delete selected",sel_none:"Select volunteers first",vols_count:"volunteers",can_delete:"Delete permission",role_admin:"Admin",role_user:"User",the_role:"Role",clinics:"Clinics",new_clinic:"New clinic",clinic_name:"Clinic name",city:"City",clinics_list:"Clinics",no_clinics:"No clinics yet.",cl_members:"Members",add_member:"Add member",member_name:"Volunteer name",allowance:"Allowance",add_allowance:"Log allowance",amount:"Amount (EGP)",a_date:"Date",a_note:"Note",monthly_report:"Monthly report",the_month:"Month",total:"Total",entries_log:"Allowances log",select_all:"Select all",no_del_perm:"No delete permission",clinic_fund:"Funder",no_members:"No members yet.",no_entries:"No entries.",visits_count:"visits",db_section:"Database (Backup & Restore)",export_all_xlsx:"Export database (Excel)",backup_json:"⬇ Backup (file)",restore_json:"Restore from backup",restored:"Restored successfully",backup_hint:"Download a full backup of all data.",restore_confirm:"Replace ALL current data? Continue?",restore_btn:"Restore from file",restore_fail:"Could not read file or invalid format",gender_dist:"Gender Distribution",male:"Male",female:"Female",convoy_expenses:"Convoy Expenses",add_expense:"Add Expense",person_name:"Person",person_role:"Role",vol_role:"Volunteer",leader_role:"Leader",meal_allow:"Meal",travel_allow:"Travel",transport_allow:"Transport",expense_total:"Total Expenses",no_expenses:"No expenses.",exp_note:"Note",bank:"Bank",account_no:"Account",job:"Job",import_clinic:"Import Clinic",export_clinic_report:"Clinic Report",convoy_report:"Convoy Report",attendance:"Attendance",skills:"Skills",skills_dist:"Skills Distribution",custom_report:"Custom Report",generate:"Generate",select_fields:"Select Fields",filter_by:"Filter by",screen_access:"Screen Access",team_leader:"Team Leader",volunteer_role:"Volunteer (View Only)",clinic_role:"Clinic Role",events:"Events",new_event:"New Event",event_name:"Event Name",event_date:"Date",event_loc:"Location",event_desc:"Description",event_status:"Status",status_planned:"Planned",status_active:"Active",status_done:"Done",status_cancelled:"Cancelled",no_events:"No events yet.",events_list:"Events List",event_type:"Type",type_convoy:"Convoy",type_training:"Training",type_meeting:"Meeting",type_other:"Other"}
+};
+let lang=localStorage.getItem("ibf:lang")||"ar";
+let theme=localStorage.getItem("ibf:theme")||"light";
+const t=k=>(I18N[lang][k]||k);
+
+let state={users:[],volunteers:[],projects:[],clinics:[],events:[],session:null,view:"dashboard",authView:"login",openProject:null,openClinic:null,openEvent:null,clMonth:null};
+let settings={formUrl:"",gsUrl:"",gsToken:"",autosync:false};
+let _charts={},_cd=null,_syncTimer=null,_lastSync=null,_syncing=false,_selMode=false;
+window._df={project:"",gov:"",skill:"",gender:""};
+let flash=null;const setFlash=(m,ty="success")=>flash={msg:m,type:ty};
+
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const toInt=v=>{const n=parseInt(v,10);return isNaN(n)?null:n;};
+const uid=()=>(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));
+const authErr=e=>{const m={"auth/invalid-credential":"بيانات الدخول غير صحيحة","auth/wrong-password":"كلمة المرور غير صحيحة","auth/user-not-found":"المستخدم غير موجود","auth/email-already-in-use":"البريد مستخدم بالفعل","auth/weak-password":"كلمة المرور ضعيفة (6 أحرف على الأقل)","auth/invalid-email":"بريد غير صالح"};return(m[e.code]||e.message)+" | "+e.code;};
+
+async function nextCode(){let cur=0;try{const d=await restGet('counters','volunteers');if(d&&d.n)cur=d.n;}catch(e){}cur++;await restSet('counters','volunteers',{n:cur});return "V"+String(cur).padStart(4,"0");}
+
+const C={
+ vol:()=>({add:d=>restAdd('volunteers',d),doc:id=>({update:d=>restUpdate('volunteers',id,d),delete:()=>restDel('volunteers',id)})}),
+ proj:()=>({add:d=>restAdd('projects',d),doc:id=>({update:d=>restUpdate('projects',id,d),delete:()=>restDel('projects',id)})}),
+ cli:()=>({add:d=>restAdd('clinics',d),doc:id=>({update:d=>restUpdate('clinics',id,d),delete:()=>restDel('clinics',id)})}),
+ usr:()=>({doc:id=>({update:d=>restUpdate('users',id,d),delete:()=>restDel('users',id)})})
+};
+async function refreshAfter(p){try{await p;await fetchAll(true);}catch(e){fail(e);}}
+async function done(msg){setFlash(msg);await fetchAll(false);}
+function fail(e){setFlash((lang==="ar"?"خطأ في الحفظ: ":"Save error: ")+(e.message||e),"error");render();}
+async function delProject(pid){await restDel('projects',pid);for(const v of state.volunteers.filter(v=>v.project_id===pid))await restUpdate('volunteers',v.id,{project_id:null});for(const u of state.users){const na=(u.assigned||[]).filter(a=>(typeof a==="object"?a.id:a)!==pid);if(na.length!==(u.assigned||[]).length)await restUpdate('users',u.id,{assigned:na});}}
+
+const isAdmin=()=>state.session&&state.session.role==="admin";
+const currentUser=()=>state.users.find(x=>state.session&&x.id===state.session.uid)||null;
+const canDelete=()=>{if(isAdmin())return true;const u=currentUser();return !!(u&&u.canDelete);};
+const canEditProject=pid=>{if(isAdmin())return true;const u=currentUser();return !!(u&&(u.assigned||[]).some(a=>(typeof a==="object"?a.id:a)===pid&&(typeof a==="object"?a.perm:"edit")==="edit"));};
+const canReadProject=pid=>{if(isAdmin())return true;const u=currentUser();return !!(u&&(u.assigned||[]).some(a=>(typeof a==="object"?a.id:a)===pid));};
+function visibleProjects(){if(isAdmin())return state.projects;const u=currentUser();const ids=new Set((u?u.assigned:[]).map(a=>typeof a==="object"?a.id:a));return state.projects.filter(p=>ids.has(p.id));}
+function canAccessScreen(screen){if(isAdmin())return true;const u=currentUser();if(!u)return false;return(u.screen_access||[]).includes(screen);}
+function canEditClinic(cid){if(isAdmin())return true;const u=currentUser();if(!u)return false;const ac=(u.assigned_clinics||[]);const entry=ac.find(a=>typeof a==='object'?(a.id===cid):(a===cid));if(!entry)return false;return typeof entry==='object'?entry.role==='team_leader':true;}
+function canViewClinic(cid){if(isAdmin())return true;const u=currentUser();if(!u)return false;const ac=(u.assigned_clinics||[]);return ac.some(a=>typeof a==='object'?(a.id===cid):(a===cid));}
+function visibleClinics(){if(isAdmin())return state.clinics;const u=currentUser();const ac=u?u.assigned_clinics||[]:[];const ids=new Set(ac.map(a=>typeof a==='object'?a.id:a));return state.clinics.filter(c=>ids.has(c.id));}
+function visibleVolunteers(){if(isAdmin())return state.volunteers;const ids=new Set(visibleProjects().map(p=>p.id));return state.volunteers.filter(v=>ids.has(v.project_id));}
+const genCodeFallback=()=>{let max=0;state.volunteers.forEach(v=>{if(v.code){const m=/^V(\d+)$/i.exec(String(v.code).trim());if(m)max=Math.max(max,parseInt(m[1],10));}});return "V"+String(max+1).padStart(4,"0");};
+
+function compressImage(file,maxW,quality){maxW=maxW||800;quality=quality||0.5;return new Promise((res,rej)=>{if(!file){res(null);return;}const reader=new FileReader();reader.onerror=()=>rej(new Error("فشل قراءة الملف"));reader.onload=e=>{const img=new Image();img.onerror=()=>rej(new Error("ملف غير صالح كصورة"));img.onload=()=>{const c=document.createElement("canvas");let w=img.width,h=img.height;if(w>maxW){h=Math.round(h*(maxW/w));w=maxW;}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);const b64=c.toDataURL("image/jpeg",quality);if(b64.length>900000){res(c.toDataURL("image/jpeg",0.3));}else{res(b64);}};img.src=e.target.result;};reader.readAsDataURL(file);});}
+
+const FIELD_KW={name:["name","full name","fullname","الاسم","الأسم","اسم","الاسم رباعي","الأسم رباعي","الاسم الرباعي","اسم المتطوع"],code:["code","الكود","كود","رقم الكود"],phone:["phone","mobile","tel","whatsapp","التليفون","الهاتف","الموبايل","رقم التليفون","رقم الهاتف","رقم الموبايل","واتساب"],national_id:["national","nationalid","البطاقة","رقم البطاقة","الرقم القومي","الرقم القومى","رقم قومي"],commitment:["commitment","score","الالتزام","درجة الالتزام","التقييم"],project:["project","project_id","projectid","رقم المشروع","رقم القافلة"],caravan:["caravan","القافلة","قافلة","اسم القافلة","المشروع"],timestamp:["timestamp","الطابع الزمني","التوقيت","الوقت"],email:["email","الإيميل","البريد","بريد","mail"]};
+function _findKey(obj,list){const norm=s=>String(s).trim().toLowerCase();for(const k of Object.keys(obj)){const nk=norm(k);if(list.some(w=>{const nw=norm(w);return nk===nw||nk.includes(nw);}))return k;}return null;}
+function parseVolunteerSheet(rows){const KW={name:["الاسم","الأسم","اسم","الاسم رباعي","الأسم رباعي","الاسم الرباعي","اسم المتطوع","name","full name","fullname"],code:["الكود","كود","code","رقم الكود"],phone:["التليفون","الهاتف","الموبايل","رقم التليفون","رقم الهاتف","رقم الموبايل","phone","mobile","tel"],national_id:["البطاقة","رقم البطاقة","الرقم القومي","الرقم القومى","رقم قومي","national id","nationalid","id"],commitment:["الالتزام","درجة الالتزام","التقييم","commitment","score"]};const norm=s=>String(s==null?"":s).trim().toLowerCase();const hit=(cell,list)=>{const c=norm(cell);return c!==""&&list.some(k=>{const n=norm(k);return c===n||c.includes(n);});};const skipTitles=["كشف  متطوعين  قافلة","مؤسسة ابراهيم أحمد بدران للأعمال الخيرية","تقييم المتطوعين","التقرير الفني للقافلة","التقرير الفني للقافله"];let headerIdx=-1,map={};for(let i=0;i<rows.length;i++){const r=rows[i]||[];if(r.some(c=>hit(c,KW.name))){headerIdx=i;r.forEach((c,ci)=>{for(const f in KW){if(map[f]===undefined&&hit(c,KW[f]))map[f]=ci;}});break;}}const out=[];const rd=(r,i)=>(i!==undefined&&r[i]!=null&&String(r[i]).trim()!=="")?String(r[i]).trim():null;if(headerIdx>=0&&map.name!==undefined){for(let i=headerIdx+1;i<rows.length;i++){const r=rows[i]||[];const name=rd(r,map.name);if(!name||skipTitles.includes(name)||hit(name,KW.name))continue;out.push({full_name:name,code:rd(r,map.code),phone:rd(r,map.phone),national_id:rd(r,map.national_id),commitment_score:map.commitment!==undefined?toInt(r[map.commitment]):null});}}else{rows.forEach(r=>{if(!r||!r[0])return;const name=String(r[0]).trim();if(!name||skipTitles.includes(name)||hit(name,KW.name))return;out.push({full_name:name,code:rd(r,1),phone:rd(r,2),national_id:rd(r,3),commitment_score:toInt(r[4])});});}return out;}
+
+function normalize(){state.users.forEach(u=>{if(!Array.isArray(u.assigned))u.assigned=[];if(!Array.isArray(u.assigned_clinics))u.assigned_clinics=[];if(!Array.isArray(u.screen_access))u.screen_access=isAdmin?['dashboard','volunteers','projects','clinics','users','settings']:['dashboard','volunteers','projects'];if(u.canDelete===undefined)u.canDelete=false;});state.clinics.forEach(c=>{if(!Array.isArray(c.members))c.members=[];if(!Array.isArray(c.entries))c.entries=[];});state.volunteers.forEach(v=>{if(!Array.isArray(v.participations))v.participations=[];});state.events.forEach(e=>{if(!e.status)e.status='planned';});
+ state.projects.forEach(p=>{if(!Array.isArray(p.caravans))p.caravans=[];if(!Array.isArray(p.expenses))p.expenses=[];if(!Array.isArray(p.problems))p.problems=[];if(!Array.isArray(p.attachments))p.attachments=[];});}
+let _pollTimer=null;
+let _lastDataHash='';
+function _dataHash(){return JSON.stringify([state.volunteers.length,state.projects.length,state.clinics.length,state.users.length,state.volunteers.map(v=>v.id+':'+(v.code||'')+'|'+(v.project_id||'')+'|'+(v.caravan||'')+'|'+(v.commitment_score||'')).join(','),state.projects.map(p=>p.id+':'+(p.caravans||[]).length).join(','),state.clinics.map(c=>c.id+':'+(c.entries||[]).length).join(',')]);}
+async function fetchAll(silent){try{const[vols,projs,clinics,users,evts]=await Promise.all([restList('volunteers'),restList('projects'),restList('clinics'),restList('users'),restList('events').catch(()=>[])]);state.volunteers=vols;state.projects=projs;state.clinics=clinics;state.users=users;state.events=evts||[];normalize();try{const s=await restGet('config','settings');if(s)settings=Object.assign({formUrl:"",gsUrl:"",gsToken:"",autosync:false},s);}catch(e){}const h=_dataHash();if(state.session&&(h!==_lastDataHash||!silent)){_lastDataHash=h;try{render();}catch(e){console.warn('Render error in poll:',e);}}startAutoSync();}catch(e){if(e.message&&e.message.includes("429")){console.warn("Rate limited, retrying in 30s...");setTimeout(()=>fetchAll(true),30000);return;}if(!silent){setFlash("خطأ في تحميل البيانات: "+e.message,"error");try{render();}catch(re){}}}}
+function startListeners(){if(_pollTimer)clearInterval(_pollTimer);fetchAll();_pollTimer=setInterval(()=>fetchAll(true),60000);}
+function stopListeners(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
+
+function render(){try{_renderInner();}catch(e){console.error('Render failed:',e);document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><h1 style="color:var(--danger)">خطأ في العرض</h1><p style="color:var(--muted);margin:10px 0">'+e.message+'</p><button onclick="location.reload()" style="background:var(--primary);color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-family:inherit">إعادة تحميل / Reload</button></div></div>';}}
+function _renderInner(){document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.documentElement.setAttribute("data-theme",theme);Object.values(_charts).forEach(c=>{try{c.destroy();}catch(e){}});_charts={};document.getElementById("app").innerHTML=state.session?renderApp():renderAuth();bind();if(state.session&&state.view==="dashboard")drawCharts();}
+function flashHTML(){if(!flash)return"";const h=`<div class="flash flash-${flash.type}">${esc(flash.msg)}</div>`;flash=null;return h;}
+const themeIcon=()=>theme==="light"?"🌙":"☀️";
+
+function renderAuth(){
+ if(state.authView==="register"){
+  return `<div class="auth-wrap"><div class="auth-card"><img class="auth-logo" src="${LOGO}" alt="IBF"><h1>${t("register_title")}</h1>${flashHTML()}
+   <form id="registerForm"><label>${lang==="ar"?"الاسم رباعي":"Full name"} *</label><input name="full_name" required>
+    <label>${t("phone")} *</label><input name="phone" required inputmode="tel" dir="ltr">
+    <label>${t("national_id")} *</label><input name="national_id" required inputmode="numeric" dir="ltr">
+    <label>${lang==="ar"?"السن":"Age"} *</label><input name="age" type="number" min="10" max="99" required>
+    <label>${t("email")} *</label><input name="email" type="email" required dir="ltr">
+    <label>${t("password")} *</label><input name="password" type="password" required minlength="6">
+    <label>${lang==="ar"?"صورة البطاقة (اختياري)":"ID Photo (optional)"}</label><input name="id_photo" type="file" accept="image/*" capture="environment">
+    <button class="btn-primary" type="submit">${t("create_account")}</button></form>
+   <p class="hint">${t("reg_note")}</p>
+   <p class="auth-foot"><a id="toLogin">${t("back_login")}</a> · <a id="langA">EN/ع</a> · <a id="themeA">${themeIcon()}</a></p></div></div>`;}
+ return `<div class="auth-wrap"><div class="auth-card"><img class="auth-logo" src="${LOGO}" alt="IBF"><h1>${t("login_title")}</h1>${flashHTML()}
+  <form id="loginForm"><label>${t("email")}</label><input name="email" type="email" required autofocus dir="ltr">
+  <label>${t("password")}</label><input name="password" type="password" required>
+  <button class="btn-primary" type="submit">${t("login_btn")}</button></form>
+  <p class="hint">${t("demo_note")}</p>
+  <p class="auth-foot">${t("no_account")} <a id="toRegister">${t("register")}</a> · <a id="langA">EN/ع</a> · <a id="themeA">${themeIcon()}</a></p></div></div>`;}
+
+function renderApp(){
+ let body="";
+ if(state.view==="dashboard")body=viewDashboard();
+ else if(state.view==="volunteers")body=viewVolunteers();
+ else if(state.view==="projects")body=viewProjects();
+ else if(state.view==="users"&&isAdmin())body=viewUsers();
+ else if(state.view==="settings"&&isAdmin())body=viewSettings();
+ else if(state.view==="clinics")body=viewClinics();
+ else if(state.view==="events")body=viewEvents();
+ else if(state.view==="profile"&&!isAdmin())body=viewProfile();
+ const nb=v=>`class="${state.view===v?'active':''}"`;
+ const who=state.session.username||state.session.email||"";
+ return `<div class="topbar"><div class="brand"><img src="${LOGO}" alt="IBF"><span>${t("org")}</span></div>
+  <nav class="nav"><button data-go="dashboard" ${nb("dashboard")}>${t("dashboard")}</button>
+   ${canAccessScreen("volunteers")?`<button data-go="volunteers" ${nb("volunteers")}>${t("volunteers")}</button>`:""}
+   ${canAccessScreen("projects")?`<button data-go="projects" ${nb("projects")}>${t("projects")}</button>`:""}
+   ${canAccessScreen("clinics")?`<button data-go="clinics" ${nb("clinics")}>${t("clinics")}</button>`:""}
+   ${canAccessScreen("events")?`<button data-go="events" ${nb("events")}>${t("events")}</button>`:""}
+   ${!isAdmin()?`<button data-go="profile" ${nb("profile")}>${lang==="ar"?"ملفي":"Profile"}</button>`:""}
+   ${isAdmin()?`<button data-go="users" ${nb("users")}>${t("users")}</button>`:""}
+   ${isAdmin()?`<button data-go="settings" ${nb("settings")}>${t("settings")}</button>`:""}</nav>
+  <div class="topbar-actions"><span class="user-chip">${esc(who)} (${esc(state.session.role)})</span>
+   ${isAdmin()&&effGs()?`<button class="btn-ghost" id="syncBtn" title="${t("sync_now")}">⟳ ${_syncing?"...":t("live")}</button>`:""}
+   <button class="btn-ghost" id="themeBtn">${themeIcon()}</button>
+   <button class="btn-ghost" id="langBtn">EN / ع</button>
+   <button class="btn-ghost" id="logoutBtn">${t("logout")}</button></div></div>
+  <div class="container">${flashHTML()}${body}</div>`;}
+
+function viewDashboard(){
+ const projs=visibleProjects();let vols=visibleVolunteers();
+ if(window._df.project)vols=vols.filter(v=>v.project_id===window._df.project);
+ if(window._df.gov){const gPids=projs.filter(p=>p.governorate===window._df.gov).map(p=>p.id);vols=vols.filter(v=>gPids.includes(v.project_id));}
+ if(window._df.skill)vols=vols.filter(v=>(v.skills||[]).some(s=>s.includes(window._df.skill)));
+ if(window._df.gender)vols=vols.filter(v=>{const g=v._reg&&v._reg.gender?v._reg.gender:(v.gender||'');return g===window._df.gender;});
+ const totCases=projs.reduce((s,p)=>s+(p.total_cases||0),0);const totExams=projs.reduce((s,p)=>s+(p.total_examinations||0),0);
+ const scored=vols.filter(v=>v.commitment_score!=null);const avg=scored.length?(scored.reduce((s,v)=>s+v.commitment_score,0)/scored.length):0;
+ const assigned=vols.filter(v=>v.project_id!=null).length;const unassigned=vols.length-assigned;
+ _cd={perProj:projs.map(p=>({name:p.name,count:vols.filter(v=>v.project_id===p.id).length})),dist:[1,2,3,4,5].map(s=>({name:String(s),count:scored.filter(v=>v.commitment_score===s).length})),byGov:Object.entries(projs.reduce((a,p)=>{if(p.governorate){a[p.governorate]=(a[p.governorate]||0)+1;}return a;},{})).map(([k,v])=>({name:k,count:v})),casesProj:projs.filter(p=>p.total_cases).map(p=>({name:p.name,count:p.total_cases})),volType:(()=>{const vt={};vols.forEach(v=>{const t=v._reg&&v._reg.volunteer_type?v._reg.volunteer_type:(v.volunteer_type||"");if(t)vt[t]=(vt[t]||0)+1;});return Object.entries(vt).map(([name,count])=>({name,count}));})(),
+  volGov:(()=>{const vg={};vols.forEach(v=>{const g=v._reg&&v._reg.governorate?v._reg.governorate:(v.governorate||"");if(g)vg[g]=(vg[g]||0)+1;});return Object.entries(vg).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);})(),
+  gender:(()=>{let m=0,f=0;vols.forEach(v=>{const g=v._reg&&v._reg.gender?v._reg.gender:(v.gender||'');if(g==='ذكر')m++;else if(g==='أنثى')f++;});return[{name:t('male'),count:m},{name:t('female'),count:f}];})()};
+ const topVol=[...scored].sort((a,b)=>b.commitment_score-a.commitment_score).slice(0,5);
+ const stat=(n,l)=>`<div class="stat-card"><div class="stat-num">${n}</div><div class="stat-label">${l}</div></div>`;
+ return `<h1 class="page-title">${t("dashboard")}</h1>
+  <div id="dashFilters" class="panel" style="padding:12px 16px;margin-bottom:14px"></div>
+  <div class="stats-grid">${stat(vols.length,t("volunteers_count"))}${stat(projs.length,t("projects_count"))}${stat(totCases,t("cases_count"))}${stat(totExams,t("exams_count"))}${stat(avg.toFixed(1)+" / 5",t("avg_commit"))}${stat(assigned,t("assigned_vol"))}${stat(unassigned,t("unassigned_vol"))}${stat(vols.length?(totExams/Math.max(1,vols.length)).toFixed(1):0,t("efficiency"))}</div>
+  <div class="grid2"><section class="panel"><h2>${t("per_project")}</h2><div class="chart-box"><canvas id="ch_perProj"></canvas></div></section>
+   <section class="panel"><h2>${t("commit_dist")}</h2><div class="chart-box"><canvas id="ch_dist"></canvas></div></section>
+   <section class="panel"><h2>${t("by_gov")}</h2><div class="chart-box"><canvas id="ch_gov"></canvas></div></section>
+   <section class="panel"><h2>${t("cases_per_proj")}</h2><div class="chart-box"><canvas id="ch_cases"></canvas></div></section></div>
+  <div class="grid2"><section class="panel"><h2>${t("gender_dist")}</h2><div class="chart-box"><canvas id="ch_gender"></canvas></div></section><section class="panel"><h2>${lang==="ar"?"نوع التطوع / Volunteer Type":"Volunteer Type"}</h2><div class="chart-box"><canvas id="ch_volType"></canvas></div></section></div>
+  <div class="grid2"><section class="panel"><h2>${lang==="ar"?"المتطوعون حسب المحافظة / By Governorate":"By Governorate"}</h2><div class="chart-box"><canvas id="ch_volGov"></canvas></div></section></div>
+  <section class="panel"><h2>${t("top_vol")}</h2>
+   ${topVol.length?`<table class="data-table"><thead><tr><th>${t("name")}</th><th>${t("code")}</th><th>${t("commitment")}</th><th>${t("project")}</th></tr></thead><tbody>${topVol.map(v=>{const pn=(projs.find(p=>p.id===v.project_id)||{}).name||"-";return `<tr><td>${esc(v.full_name)}</td><td>${esc(v.code||"-")}</td><td><span class="stars">${"★".repeat(v.commitment_score)}</span> ${v.commitment_score}</td><td>${esc(pn)}</td></tr>`;}).join("")}</tbody></table>`:`<p class="muted">${t("no_data")}</p>`}</section>`;}
+
+function drawCharts(){if(typeof Chart==="undefined"||!_cd)return;const cs=getComputedStyle(document.documentElement);const primary=cs.getPropertyValue("--primary").trim()||"#17bdef";const accent=cs.getPropertyValue("--accent").trim()||"#f5a623";const grid=cs.getPropertyValue("--border").trim()||"#ddd";const muted=cs.getPropertyValue("--muted").trim()||"#888";const mk=(id,data,color)=>{const el=document.getElementById(id);if(!el||!data.length)return;_charts[id]=new Chart(el,{type:"bar",data:{labels:data.map(d=>d.name),datasets:[{data:data.map(d=>d.count),backgroundColor:color,borderRadius:6,maxBarThickness:46}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:muted,font:{size:11}},grid:{display:false}},y:{beginAtZero:true,ticks:{color:muted,precision:0,font:{size:11}},grid:{color:grid}}}}});};mk("ch_perProj",_cd.perProj,primary);mk("ch_dist",_cd.dist,accent);mk("ch_gov",_cd.byGov,primary);mk("ch_cases",_cd.casesProj,accent);if(_cd.volType&&_cd.volType.length){const vtel=document.getElementById("ch_volType");if(vtel)_charts["ch_volType"]=new Chart(vtel,{type:"doughnut",data:{labels:_cd.volType.map(v=>v.name),datasets:[{data:_cd.volType.map(v=>v.count),backgroundColor:["#17bdef","#f5a623","#e2574c","#27ae60"],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:muted,font:{size:11,family:"Cairo"}}}}}});}
+ if(_cd.volGov&&_cd.volGov.length){const vgel=document.getElementById("ch_volGov");if(vgel)_charts["ch_volGov"]=new Chart(vgel,{type:"bar",data:{labels:_cd.volGov.map(v=>v.name),datasets:[{data:_cd.volGov.map(v=>v.count),backgroundColor:"#17bdef",borderRadius:6,maxBarThickness:40}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:muted,precision:0}},y:{ticks:{color:muted,font:{size:11}}}}}});}
+ if(_cd.gender&&_cd.gender.some(g=>g.count>0)){const gel=document.getElementById("ch_gender");if(gel)_charts["ch_gender"]=new Chart(gel,{type:"doughnut",data:{labels:_cd.gender.map(g=>g.name),datasets:[{data:_cd.gender.map(g=>g.count),backgroundColor:["#17bdef","#f5a623"],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:muted,font:{size:12,family:"Cairo"}}}}}});}}
+
+function viewVolunteers(){
+ const projs=visibleProjects(),vols=visibleVolunteers();
+ const opts=`<option value="">${t("no_project")}</option>`+projs.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+ const sel=_selMode&&canDelete();
+ const rows=vols.length?vols.map(v=>{const pn=(state.projects.find(p=>p.id===v.project_id)||{}).name||"-";
+  return `<tr data-s="${esc(((v.code||"")+" "+(v.full_name||"")+" "+(v.phone||"")+" "+(v.national_id||"")).toLowerCase())}">${sel?`<td><input type="checkbox" class="selv" value="${v.id}"></td>`:""}<td>${esc(v.full_name)}</td><td>${esc(v.code||"-")}</td><td dir="ltr">${esc(v.phone||"-")}${v.phone?` <a href="https://wa.me/${v.phone.replace(/[^0-9]/g,'').replace(/^0/,'20')}" target="_blank" title="WhatsApp" style="text-decoration:none">📱</a>`:""}</td><td>${esc(v.national_id||"-")}</td><td>${v.email?`<a href="mailto:${esc(v.email)}" title="Email" style="text-decoration:none">✉️ ${esc(v.email)}</a>`:"-"}</td><td>${v._reg&&v._reg.volunteer_type?esc(v._reg.volunteer_type):(v.volunteer_type||"-")}</td><td>${v._reg&&v._reg.governorate?esc(v._reg.governorate):(v.governorate||"-")}</td><td>${esc(pn)}</td><td>${v.id_photo?v.id_photo.split(' | ').filter(Boolean).map(u=>'<a href="'+u.trim()+'" target="_blank" style="text-decoration:none;font-size:1.1rem" title="'+(lang==="ar"?"صورة البطاقة":"ID photo")+'">📷</a>').join(' '):"-"}</td>${canDelete()?`<td><button class="btn-danger-sm" data-delv="${v.id}">${t("delete")}</button></td>`:""}</tr>`;
+ }).join(""):`<tr><td colspan="10" class="muted">${t("no_data")}</td></tr>`;
+ const selBar=canDelete()?`<div class="toolbar" style="margin-bottom:10px"><button class="btn-secondary" id="selToggle">${sel?"✕ "+t("sel_cancel"):"☑ "+t("sel_toggle")}</button>${sel?`<button class="btn-danger-sm" id="delSel">🗑 ${t("del_selected")}</button>`:""}</div>`:"";
+ return `<h1 class="page-title">${t("volunteers")}</h1>
+  <div class="toolbar">${isAdmin()?`<input type="file" id="importFile" accept=".xlsx,.xlsm" style="max-width:250px"><button class="btn-secondary" id="importBtn">${t("import")}</button>`:""}
+   <button class="btn-secondary" id="exportBtn">${t("export")}</button></div>
+  ${isAdmin()?`<section class="panel"><h2>${t("add_volunteer")}</h2>`:`<section class="panel" style="display:none">`}
+   <form id="volForm" class="grid-form">
+    <input name="full_name" placeholder="${t("f_name")}" required>
+    <input name="code" placeholder="${t("f_code")}">
+    <input name="phone" placeholder="${t("f_phone")}">
+    <input name="national_id" placeholder="${t("f_id")}">
+    <input name="commitment_score" type="number" min="1" max="5" placeholder="${t("f_score")}">
+    <input name="email" type="email" placeholder="${lang==="ar"?"الإيميل (اختياري)":"Email (optional)"}">
+    <select name="project_id">${opts}</select>
+    <label class="fld">${lang==="ar"?"صورة البطاقة":"ID Photo"}<input name="id_photo" type="file" accept="image/*" capture="environment"></label>
+    <button class="btn-primary" type="submit">${t("add")}</button></form></section>
+  <section class="panel"><div style="margin-bottom:14px"><input id="volSearch" placeholder="${t("search_ph")}" style="max-width:520px"><span id="volCount" class="pill" style="margin-inline-start:8px"></span></div>${selBar}<table class="data-table"><thead><tr>${sel?"<th></th>":""}<th>${t("name")}</th><th>${t("code")}</th><th>${t("phone")}</th><th>${t("national_id")}</th><th>${lang==="ar"?"الإيميل":"Email"}</th><th>${lang==="ar"?"نوع التطوع / Type":"Vol. Type"}</th><th>${t("p_gov")}</th><th>${t("project")}</th><th>${lang==="ar"?"📷":"Photo"}</th>${canDelete()?"<th></th>":""}</tr></thead><tbody>${rows}</tbody></table></section>`;}
+
+function exportVols(list,fname){if(!list.length){setFlash(lang==="ar"?"لا يوجد متطوعون للتصدير":"Nothing to export","error");render();return;}const data=[["الأسم رباعي","الكود","رقم التليفون","رقم البطاقة","القافلة","المشروع","الإيميل","صورة البطاقة"]];list.forEach(v=>{const pn=(state.projects.find(p=>p.id===v.project_id)||{}).name||"";data.push([v.full_name,v.code||"",v.phone||"",v.national_id||"",v.caravan||"",pn,v.email||"",v.id_photo||""]);});const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Volunteers");XLSX.writeFile(wb,fname);}
+function exportAllXlsx(){const wb=XLSX.utils.book_new();const add=(n,a)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a),n);const pn=id=>(state.projects.find(p=>p.id===id)||{}).name||"";add("Volunteers",[["id","الاسم","الكود","التليفون","البطاقة","الالتزام","project_id","المشروع","القافلة","الإيميل","السن"],...state.volunteers.map(v=>[v.id,v.full_name,v.code||"",v.phone||"",v.national_id||"",v.commitment_score??"",v.project_id??"",pn(v.project_id),v.caravan||"",v.email||"",v.age||""])]);add("Projects",[["id","الاسم","المحافظة","الممول","المشرف","الحالات","الكشوفات"],...state.projects.map(p=>[p.id,p.name,p.governorate||"",p.funder||"",p.supervisor||"",p.total_cases||0,p.total_examinations||0])]);const cr=[["project_id","المشروع","القافلة","التاريخ","المحافظة"]];state.projects.forEach(p=>(p.caravans||[]).forEach(c=>cr.push([p.id,p.name,c.name,c.date||"",c.location||""])));add("Caravans",cr);
+ const ex=[["project_id","القافلة","الاسم","الدور","بدل وجبة","بدل سفر","بدل انتقال","ملاحظة","التاريخ"]];state.projects.forEach(p=>(p.expenses||[]).forEach(e=>ex.push([p.id,e.caravan||"",e.name,e.role||"",+e.meal||0,+e.travel||0,+e.transport||0,e.note||"",e.date||""])));add("Expenses",ex);add("Clinics",[["id","الاسم","المحافظة","المدينة","الممول"],...state.clinics.map(c=>[c.id,c.name,c.governorate||"",c.city||"",c.funder||""])]);const mr=[["clinic_id","العيادة","العضو"]];state.clinics.forEach(c=>(c.members||[]).forEach(m=>mr.push([c.id,c.name,m.name])));add("ClinicMembers",mr);const er=[["clinic_id","العيادة","العضو","التاريخ","المبلغ","ملاحظة"]];state.clinics.forEach(c=>(c.entries||[]).forEach(e=>er.push([c.id,c.name,e.member,e.date||"",+e.amount||0,e.note||""])));add("Allowances",er);add("Users",[["المستخدم","الدور","صلاحية الحذف","المشاريع المعيّنة"],...state.users.map(u=>[u.username||u.email,u.role,u.canDelete?"نعم":"لا",(u.assigned||[]).map(a=>typeof a==="object"?a.id:a).join(",")])]);XLSX.writeFile(wb,"IBF_database_"+new Date().toISOString().slice(0,10)+".xlsx");}
+function backupJSON(){const data={version:2,source:"firestore",exportedAt:new Date().toISOString(),volunteers:state.volunteers,projects:state.projects,clinics:state.clinics,users:state.users};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="IBF_backup_"+new Date().toISOString().slice(0,10)+".json";a.click();}
+async function restoreJSON(file){const txt=await file.text();let d;try{d=JSON.parse(txt);}catch(e){setFlash(t("restore_fail"),"error");render();return;}if(!d.volunteers||!d.projects){setFlash(t("restore_fail"),"error");render();return;}try{for(const col of ["volunteers","projects","clinics"]){const docs=await restList(col);for(const doc of docs)await restDel(col,doc.id);}const projMap={};for(const p of d.projects){await restAdd("projects",{name:p.name||"",governorate:p.governorate||null,funder:p.funder||null,supervisor:p.supervisor||null,team:p.team||null,total_cases:+p.total_cases||0,total_examinations:+p.total_examinations||0,notes:p.notes||null,caravans:(p.caravans||[]).map(c=>({id:c.id||uid(),name:c.name,date:c.date||null,location:c.location||null}))});}for(const v of d.volunteers){await restAdd('volunteers',{full_name:v.full_name||"",code:v.code||null,phone:v.phone||null,national_id:v.national_id||null,commitment_score:v.commitment_score??null,project_id:(v.project_id!=null&&projMap[v.project_id])?projMap[v.project_id]:null,caravan:v.caravan||null,email:v.email||null,age:v.age||null,_ts:v._ts||null,participations:Array.isArray(v.participations)?v.participations:[]});}for(const c of(d.clinics||[])){await restAdd('clinics',{name:c.name||"",governorate:c.governorate||null,city:c.city||null,funder:c.funder||null,members:(c.members||[]).map(m=>({id:m.id||uid(),name:m.name})),entries:(c.entries||[]).map(e=>({id:e.id||uid(),member:e.member,date:e.date||null,amount:+e.amount||0,note:e.note||null}))});}await done(t("restored"));}catch(e){fail(e);}}
+
+function viewProjects(){
+ const projs=visibleProjects();
+ if(!isAdmin()&&projs.length===0)return `<h1 class="page-title">${t("my_projects")}</h1><section class="panel"><p class="muted">${t("none_assigned")}</p></section>`;
+ const govOpts=v=>`<option value="">${t("select_gov")}</option>`+GOVS.map(g=>`<option value="${g}"${v===g?" selected":""}>${g}</option>`).join("");
+ if(state.openProject!=null){const p=projs.find(x=>x.id===state.openProject);if(!p){state.openProject=null;}else return projectDetail(p,govOpts);}
+ const form=isAdmin()?`<section class="panel"><h2>${t("new_project")}</h2><form id="projForm" class="grid-form"><label class="fld">${t("p_name")}<input name="name" required></label><label class="fld">${t("p_gov")}<select name="governorate">${govOpts("")}</select></label><label class="fld">${t("p_fund")}<input name="funder"></label><label class="fld">${t("p_sup")}<input name="supervisor"></label><label class="fld">${t("p_team")}<input name="team"></label><label class="fld">${t("p_cases")}<input name="total_cases" type="number" min="0"></label><label class="fld">${t("p_exams")}<input name="total_examinations" type="number" min="0"></label><textarea name="notes" placeholder="${t("p_notes")}"></textarea><button class="btn-primary" type="submit">${t("create")}</button></form></section>`:"";
+ const folders=projs.length?projs.map(p=>{const vc=(isAdmin()?state.volunteers:visibleVolunteers()).filter(v=>v.project_id===p.id).length;const cc=[...new Set([...(p.caravans||[]).map(c=>c.name),...state.volunteers.filter(v=>v.project_id===p.id&&v.caravan).map(v=>v.caravan)])].length;return `<div class="folder-card" data-open="${p.id}"><div class="folder-icon">📁</div><div class="folder-body"><div class="folder-name">${esc(p.name)}</div><div class="folder-sub">${p.governorate?esc(p.governorate)+" · ":""}${cc} ${t("caravans")} · ${vc} ${t("vol_short")}</div></div>${isAdmin()?`<button class="btn-danger-sm" data-delp="${p.id}" title="${t("delete")}">${t("delete")}</button>`:""}<div class="folder-arrow">›</div></div>`;}).join(""):`<p class="muted">${t("no_projects")}</p>`;
+ return `<h1 class="page-title">${isAdmin()?t("projects"):t("my_projects")}</h1>${form}<section class="panel"><h2>${t("projects_list")}</h2><div class="folders">${folders}</div></section>`;}
+
+function projectDetail(p,govOpts){
+ const projVols=(isAdmin()?state.volunteers:visibleVolunteers()).filter(v=>v.project_id===p.id);
+ const meta=[p.governorate&&`${t("p_gov")}: ${esc(p.governorate)}`,p.funder&&`${t("p_fund")}: ${esc(p.funder)}`,p.supervisor&&`${t("p_sup")}: ${esc(p.supervisor)}`,`${t("cases")}: ${p.total_cases||0} | ${t("examined")}: ${p.total_examinations||0}`].filter(Boolean).map(x=>`<li>${x}</li>`).join("");
+ const defined=(p.caravans||[]);const regNames=[...new Set(projVols.map(v=>v.caravan).filter(Boolean))];const allNames=[...new Set([...defined.map(c=>c.name),...regNames])];const noCv=projVols.filter(v=>!v.caravan);
+ const tbl=(list,cn)=>{const dc=canDelete();return `<table class="data-table"><thead><tr>${dc?`<th style="width:34px"><input type="checkbox" class="cvselall" data-cn="${esc(cn||"")}"></th>`:""}<th>${t("code")}</th><th>${t("name")}</th><th>${t("phone")}</th><th>${t("national_id")}</th><th>${lang==="ar"?"الدور / Role":"Role"}</th></tr></thead><tbody>${list.length?list.map(v=>`<tr data-s="${esc(((v.code||"")+" "+(v.full_name||"")+" "+(v.phone||"")+" "+(v.national_id||"")).toLowerCase())}">${dc?`<td><input type="checkbox" class="cvsel" value="${v.id}"></td>`:""}<td><span class="pill">${esc(v.code||"-")}</span></td><td>${esc(v.full_name)}</td><td dir="ltr">${esc(v.phone||"-")}${v.phone?` <a href="https://wa.me/${v.phone.replace(/[^0-9]/g,'').replace(/^0/,'20')}" target="_blank" title="WhatsApp" style="text-decoration:none">📱</a>`:""}</td><td dir="ltr">${esc(v.national_id||"-")}</td><td><select class="vol-role" data-vid="${v.id}" style="font-size:.75rem;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);min-width:100px"><option value="">${lang==="ar"?"— اختر —":"— Select —"}</option>${CONVOY_ROLES.map(r=>`<option value="${esc(r)}"${v.convoy_role===r?" selected":""}>${esc(r)}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="${dc?6:5}" class="muted" style="text-align:center">${t("vpp_none")}</td></tr>`}</tbody></table>${dc&&list.length?`<div style="margin-top:8px"><button class="btn-danger-sm cvdel" type="button">🗑 ${t("del_selected")}</button></div>`:""}`;};
+ const cvBlocks=allNames.map(cn=>{const cmeta=defined.find(c=>c.name===cn);const cvVols=projVols.filter(v=>v.caravan===cn);const sub=[cmeta&&cmeta.location&&`${t("p_gov")}: ${esc(cmeta.location)}`,cmeta&&cmeta.date&&`${t("p_date")}: ${esc(cmeta.date)}`].filter(Boolean).join(" · ");return `<details class="cv-item"${cvVols.length?" open":""}><summary><span class="cv-name">🚐 ${esc(cn)}</span><span class="badge">${cvVols.length} ${t("vols_count")}</span><button class="btn-secondary cv-qr" data-qrp="${p.id}" data-qrc="${esc(cn)}" type="button">⬛ QR</button><button class="btn-secondary cv-exp" data-expp="${p.id}" data-expc="${esc(cn)}" type="button">⬇ Excel</button>${cmeta&&canEditProject(p.id)?`<button class="btn-danger-sm cv-del" data-delcvp="${p.id}" data-delcvn="${esc(cn)}" type="button">${t("delete")}</button>`:""}</summary>${sub?`<div class="muted" style="padding:4px 0 8px;font-size:.82rem">${sub}</div>`:""}${tbl(cvVols,cn)}
+   <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">
+    <div style="font-weight:700;font-size:.82rem;color:var(--primary-darker);margin-bottom:6px">📎 ${lang==="ar"?"مرفقات / Attachments":"Attachments"}</div>
+    ${canEditProject(p.id)?'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><input type="file" class="cv-attach-file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style="font-size:.75rem;max-width:180px"><button class="btn-secondary cv-upload-attach" data-pid="'+p.id+'" data-cn="'+esc(cn)+'" style="font-size:.75rem;padding:4px 10px">⬆</button></div>':""}
+    ${(()=>{const atts=(p.attachments||[]).filter(a=>a.caravan===cn);return atts.length?atts.map(att=>'<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--soft);border-radius:6px;font-size:.78rem;margin-bottom:4px"><span>'+(att.type&&att.type.includes("image")?"🖼️":"📄")+'</span><a href="'+esc(att.url)+'" target="_blank" style="flex:1;color:var(--primary);text-decoration:none;font-weight:600">'+esc(att.name||"مرفق")+'</a><span class="pill">'+esc((att.date||"").slice(0,10))+'</span>'+(canDelete()?'<button class="btn-danger-sm" data-delattach="'+p.id+'" data-attid="'+att.id+'" style="font-size:.65rem;padding:2px 6px">✕</button>':'')+'</div>').join(''):'<span style="font-size:.78rem;color:var(--muted)">'+(lang==="ar"?"لا توجد مرفقات":"No attachments")+'</span>';})()}
+   </div></details>`;}).join("");
+ const noCvBlock=noCv.length?`<details class="cv-item"><summary><span class="cv-name">📍 ${t("unassigned_cv")}</span><span class="badge">${noCv.length} ${t("vols_count")}</span></summary>${tbl(noCv,"")}</details>`:"";
+ const addCv=canEditProject(p.id)?`<form class="add-cv" data-addcv="${p.id}"><input name="cname" placeholder="${t("caravan_name")}" required><select name="cloc">${govOpts("")}</select><input name="cdate" type="date"><button class="btn-secondary" type="submit">＋ ${t("add_caravan")}</button></form>`:"";
+ return `<div class="detail-top"><button class="btn-ghost" id="backProjects" style="color:var(--text);border-color:var(--border)">‹ ${t("projects")}</button></div><div class="project-head" style="margin:8px 0 12px"><h1 class="page-title" style="margin:0">📁 ${esc(p.name)}</h1><span class="badge">${projVols.length} ${t("vol_short")}</span></div>${meta?`<ul class="project-meta">${meta}</ul>`:""}<div class="toolbar" style="margin-bottom:12px"><input id="projSearch" placeholder="${t("search_ph")}" style="max-width:420px"><button class="btn-secondary" id="expProject">⬇ ${t("export")} ${t("vols_count")}</button><button class="btn-secondary" id="expConvoyReport">📊 ${t("convoy_report")}</button></div><section class="panel"><div class="cv-head">${t("caravans")}</div>${addCv}${(allNames.length||noCv.length)?(cvBlocks+noCvBlock):`<p class="muted">${t("no_caravans")}</p>`}</section>
+  ${canEditProject(p.id)?`<section class="panel"><div class="cv-head">⚠️ ${lang==="ar"?"المشاكل والتحديات / Challenges":"Challenges"}</div>
+   <form class="add-cv" data-addproblem="${p.id}"><input name="problem" placeholder="${lang==="ar"?"أضف مشكلة...":"Add problem..."}" required style="flex:2"><input name="pdate" type="date"><button class="btn-secondary" type="submit">＋</button></form>
+   ${(p.problems||[]).length?(p.problems||[]).map(pr=>'<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--soft);border-radius:8px;font-size:.82rem;margin-top:6px"><span style="flex:1">⚠️ '+esc(pr.text)+'</span><span class="pill">'+(pr.date||"")+'</span>'+(canDelete()?'<button class="btn-danger-sm" data-delproblem="'+p.id+'" data-prid="'+pr.id+'" style="font-size:.68rem">✕</button>':'')+'</div>').join(''):''}
+  </section>`:""}
+  ${canEditProject(p.id)?`<section class="panel"><div class="cv-head">💰 ${t("convoy_expenses")}</div>
+   <form class="add-cv" data-addexp="${p.id}">
+    <input name="ename" placeholder="${t("person_name")}" required style="min-width:120px">
+    <select name="erole" required><option value="متطوع">${t("vol_role")}</option><option value="ليدر">${t("leader_role")}</option></select>
+    <select name="ecaravan"><option value="">${t("caravan")}...</option>${allNames.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('')}</select>
+    <input name="emeal" type="number" min="0" placeholder="${t("meal_allow")}" style="width:90px">
+    <input name="etravel" type="number" min="0" placeholder="${t("travel_allow")}" style="width:90px">
+    <input name="etransport" type="number" min="0" placeholder="${t("transport_allow")}" style="width:90px">
+    <input name="enote" placeholder="${t("exp_note")}">
+    <button class="btn-secondary" type="submit">＋ ${t("add_expense")}</button>
+   </form>
+   ${(()=>{const exps=(p.expenses||[]).sort((a,b)=>(b.date||'').localeCompare(a.date||''));const totalM=exps.reduce((s,e)=>s+(+e.meal||0),0);const totalT=exps.reduce((s,e)=>s+(+e.travel||0),0);const totalR=exps.reduce((s,e)=>s+(+e.transport||0),0);const grand=totalM+totalT+totalR;return exps.length?'<table class="data-table"><thead><tr><th>'+t("person_name")+'</th><th>'+t("person_role")+'</th><th>'+t("caravan")+'</th><th>'+t("meal_allow")+'</th><th>'+t("travel_allow")+'</th><th>'+t("transport_allow")+'</th><th>'+t("exp_note")+'</th>'+(canDelete()?'<th></th>':'')+'</tr></thead><tbody>'+exps.map(e=>'<tr><td>'+esc(e.name)+'</td><td>'+esc(e.role)+'</td><td>'+esc(e.caravan||'-')+'</td><td>'+(+e.meal||0)+' ج.م</td><td>'+(+e.travel||0)+' ج.م</td><td>'+(+e.transport||0)+' ج.م</td><td>'+esc(e.note||'')+'</td>'+(canDelete()?'<td><button class="btn-danger-sm" data-delexp="'+p.id+'" data-expid="'+e.id+'">'+t("delete")+'</button></td>':'')+'</tr>').join('')+'<tr style="font-weight:700;background:var(--soft)"><td colspan="3">'+t("expense_total")+'</td><td>'+totalM+' ج.م</td><td>'+totalT+' ج.م</td><td>'+totalR+' ج.م</td><td colspan="2">'+grand+' ج.م</td></tr></tbody></table>':'<p class="muted">'+t("no_expenses")+'</p>';})()}
+  </section>`:''}`;}
+
+function viewProfile(){
+ const u=currentUser();if(!u)return `<p class="muted">—</p>`;const v=state.volunteers.find(x=>x.code===u.code)||null;
+ const plist=(v&&Array.isArray(v.participations)?v.participations:[]).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+ const clinicMem=state.clinics.filter(c=>(c.members||[]).some(m=>m.name===u.full_name||(v&&m.name===v.full_name)));
+ const pn=id=>(state.projects.find(p=>p.id===id)||{}).name||"—";
+ const partRows=plist.length?plist.map(p=>`<tr><td>${esc(p.caravan||"—")}</td><td>${esc(pn(p.project_id))}</td><td dir="ltr">${esc((p.date||"").slice(0,10))}</td></tr>`).join(""):`<tr><td colspan="3" class="muted">${lang==="ar"?"لم تشارك في قوافل بعد.":"No participations yet."}</td></tr>`;
+ const clinicRows=clinicMem.length?clinicMem.map(c=>`<tr><td>${esc(c.name)}</td><td>${[c.governorate,c.city].filter(Boolean).map(esc).join(" - ")||"—"}</td></tr>`).join(""):`<tr><td colspan="2" class="muted">${lang==="ar"?"لم تنضم لعيادات بعد.":"No clinic memberships."}</td></tr>`;
+ return `<h1 class="page-title">${lang==="ar"?"ملفي الشخصي":"My Profile"}</h1><section class="panel"><div style="display:flex;align-items:center;gap:16px;margin-bottom:14px"><div style="width:60px;height:60px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800">${esc((u.full_name||u.username||"?").charAt(0))}</div><div><div style="font-weight:700;font-size:1.1rem">${esc(u.full_name||u.username)}</div><div class="pill" style="margin-top:4px">${lang==="ar"?"الكود":"Code"}: ${esc(u.code||"—")}</div></div></div><ul class="project-meta">${[u.phone&&`${t("phone")}: ${esc(u.phone)}`,u.national_id&&`${t("national_id")}: ${esc(u.national_id)}`,u.age&&`${lang==="ar"?"السن":"Age"}: ${u.age}`].filter(Boolean).map(x=>`<li>${x}</li>`).join("")}</ul><div class="cv-head" style="margin-top:16px">${lang==="ar"?"سجل المشاركات في القوافل":"Caravan Participation Log"} <span class="badge">${plist.length}</span></div><table class="data-table"><thead><tr><th>${t("caravan")}</th><th>${t("project")}</th><th>${lang==="ar"?"التاريخ":"Date"}</th></tr></thead><tbody>${partRows}</tbody></table><div class="cv-head" style="margin-top:16px">${lang==="ar"?"العيادات":"Clinics"} <span class="badge">${clinicMem.length}</span></div><table class="data-table"><thead><tr><th>${t("clinic_name")}</th><th>${t("p_loc")}</th></tr></thead><tbody>${clinicRows}</tbody></table></section>`;}
+
+function curMonth(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+const entMonth=e=>(e.date||"").slice(0,7);
+function viewClinics(){if(state.openClinic!=null){const c=state.clinics.find(x=>x.id===state.openClinic);if(c)return clinicDetail(c);state.openClinic=null;}const govOpts=`<option value="">${t("select_gov")}</option>`+GOVS.map(g=>`<option value="${g}">${g}</option>`).join("");return `<h1 class="page-title">🏥 ${t("clinics")}</h1><section class="panel"><h2>${t("new_clinic")}</h2><form id="clinicForm" class="grid-form"><label class="fld">${t("clinic_name")}<input name="name" required></label><label class="fld">${t("p_gov")}<select name="governorate">${govOpts}</select></label><label class="fld">${t("city")}<input name="city"></label><label class="fld">${t("clinic_fund")}<input name="funder"></label>
+   <label class="fld">${lang==="ar"?"مسؤول العيادة / Team Leader":"Team Leader"}<input name="leader" placeholder="${lang==="ar"?"اسم التيم ليدر":"Leader name"}"></label><button class="btn-primary" type="submit">${t("create")}</button></form></section><section class="panel"><h2>📋 ${lang==="ar"?"قاعدة بيانات متطوعي العيادات / Clinic Volunteers DB":"Clinic Volunteers DB"}</h2>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <input type="file" id="globalClinicImport" accept=".xlsx,.xlsm" style="max-width:200px;font-size:.8rem">
+    <button class="btn-secondary" id="globalImportBtn" style="font-size:.82rem">⬆ ${lang==="ar"?"استيراد لكل العيادات / Import to All":"Import to All"}</button>
+    <button class="btn-secondary" id="globalExportBtn" style="font-size:.82rem">⬇ ${lang==="ar"?"تصدير كل العيادات / Export All":"Export All"}</button>
+    <span class="pill" style="margin-inline-start:auto">${state.clinics.reduce((s,cl)=>s+(cl.members||[]).length,0)} ${lang==="ar"?"عضو / members":"members"}</span>
+   </div>
+  </section>
+  <section class="panel"><h2>${t("clinics_list")}</h2><div class="folders">${(isAdmin()?state.clinics:visibleClinics()).length?(isAdmin()?state.clinics:visibleClinics()).map(c=>{const mt=(c.entries||[]).filter(e=>entMonth(e)===curMonth()).reduce((s,e)=>s+(+e.amount||0),0);return `<div class="folder-card" data-openclinic="${c.id}"><div class="folder-icon">🏥</div><div class="folder-body"><div class="folder-name">${esc(c.name)}</div><div class="folder-sub">${[c.governorate,c.city].filter(Boolean).map(esc).join(" - ")}${c.funder?" · "+esc(c.funder):""}${c.leader?" · 👤 "+esc(c.leader):""} · ${(c.members||[]).length} ${t("vols_count")} · ${t("the_month")}: ${mt} ج.م</div></div>${canDelete()?`<button class="btn-danger-sm" data-delclinic="${c.id}">${t("delete")}</button>`:""}<div class="folder-arrow">›</div></div>`;}).join(""):`<p class="muted">${t("no_clinics")}</p>`}</div></section>`;}
+function clinicDetail(c){const months=[...new Set((c.entries||[]).map(entMonth).filter(Boolean))].sort().reverse();const cm=curMonth();if(!months.includes(cm))months.unshift(cm);const selM=(state.clMonth===null||state.clMonth===undefined)?cm:state.clMonth;const monthOpts=`<option value=""${selM===""?" selected":""}>${t("total")} — ${lang==="ar"?"كل الشهور":"All"}</option>`+months.map(m=>`<option value="${m}"${m===selM?" selected":""}>${m}</option>`).join("");const memberOpts=`<option value="">${t("member_name")}</option>`+(c.members||[]).map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join("");const memTotal=name=>(c.entries||[]).filter(e=>e.member===name&&(!selM||entMonth(e)===selM)).reduce((s,e)=>s+(+e.amount||0),0);const memRows=(c.members||[]).length?c.members.map(m=>`<tr><td>${esc(m.name)}</td><td dir="ltr">${esc(m.national_id||"-")}</td><td dir="ltr">${esc(m.account_number||"-")}</td><td>${esc(m.bank||"-")}</td><td>${esc(m.job||"متطوع")}</td><td>${memTotal(m.name)} ج.م</td>${canDelete()?`<td><button class="btn-danger-sm" data-delmem="${c.id}" data-memname="${encodeURIComponent(m.name)}">${t("delete")}</button></td>`:""}</tr>`).join(""):`<tr><td colspan="${canDelete()?7:6}" class="muted">${t("no_members")}</td></tr>`;const ents=(c.entries||[]).filter(e=>!selM||entMonth(e)===selM).sort((a,b)=>(b.date||"").localeCompare(a.date||""));const entRows=ents.length?ents.map(e=>`<tr><td>${esc(e.member)}</td><td dir="ltr">${esc(e.date||"-")}</td><td>${(+e.amount||0)} ج.م</td><td>${esc(e.note||"")}</td>${canDelete()?`<td><button class="btn-danger-sm" data-delentry="${c.id}" data-entryid="${e.id}">${t("delete")}</button></td>`:""}</tr>`).join(""):`<tr><td colspan="${canDelete()?5:4}" class="muted">${t("no_entries")}</td></tr>`;const total=(c.entries||[]).filter(e=>!selM||entMonth(e)===selM).reduce((s,e)=>s+(+e.amount||0),0);const info=[c.governorate&&`${t("p_gov")}: ${esc(c.governorate)}`,c.city&&`${t("city")}: ${esc(c.city)}`,c.funder&&`${t("clinic_fund")}: ${esc(c.funder)}`,c.leader&&`👤 ${lang==="ar"?"مسؤول العيادة":"Leader"}: ${esc(c.leader)}`].filter(Boolean).map(x=>`<li>${x}</li>`).join("");return `<div class="detail-top"><button class="btn-ghost" id="backClinics" style="color:var(--text);border-color:var(--border)">‹ ${t("clinics")}</button></div><div class="project-head" style="margin:8px 0 12px"><h1 class="page-title" style="margin:0">🏥 ${esc(c.name)}</h1></div>${info?`<ul class="project-meta">${info}</ul>`:""}<section class="panel"><div class="cv-head">${t("cl_members")}</div><form class="grid-form" data-addmem="${c.id}" style="margin-bottom:14px">
+    <input name="mname" placeholder="${t("member_name")}" required>
+    <input name="mnid" placeholder="${t("national_id")}" dir="ltr">
+    <input name="maccount" placeholder="${t("account_no")}" dir="ltr">
+    <input name="mbank" placeholder="${t("bank")}" value="MIDG">
+    <select name="mjob"><option value="متطوع">${t("vol_role")}</option><option value="ليدر">${t("leader_role")}</option></select>
+    <button class="btn-primary" type="submit">＋ ${t("add_member")}</button></form>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+    <input type="file" id="importMembersFile" accept=".xlsx,.xlsm" style="max-width:200px;font-size:.8rem">
+    <button class="btn-secondary" id="importMembersBtn" style="font-size:.8rem;padding:7px 12px">⬆ ${lang==="ar"?"استيراد أعضاء / Import Members":"Import Members"}</button>
+    <button class="btn-secondary" id="exportMembersBtn" style="font-size:.8rem;padding:7px 12px">⬇ ${lang==="ar"?"تصدير أعضاء / Export Members":"Export Members"}</button>
+   </div><table class="data-table"><thead><tr><th>${t("member_name")}</th><th>${t("national_id")}</th><th>${t("account_no")}</th><th>${t("bank")}</th><th>${t("job")}</th><th>${t("total")} (${selM||"الكل"})</th>${canDelete()?"<th></th>":""}</tr></thead><tbody>${memRows}</tbody></table></section><section class="panel"><div class="cv-head">${t("add_allowance")}</div><form class="add-cv" data-addentry="${c.id}"><select name="emember" required>${memberOpts}</select><input name="edate" type="date" required><input name="eamount" type="number" min="0" step="any" placeholder="${t("amount")}" required><input name="enote" placeholder="${t("a_note")}"><button class="btn-secondary" type="submit">＋ ${t("add_allowance")}</button></form></section><section class="panel"><div class="cv-head">${t("monthly_report")}</div><div class="toolbar" style="margin-bottom:12px"><label>${t("the_month")}: <select id="clMonth">${monthOpts}</select></label><button class="btn-secondary" id="expClinic">⬇ ${t("export")}</button><input type="file" id="importClinicFile" accept=".xlsx,.xlsm" style="max-width:180px"><button class="btn-secondary" id="importClinicBtn">⬆ ${t("import_clinic")}</button><span class="pill" style="margin-inline-start:auto;font-size:.95rem;background:rgba(23,189,239,.15);color:var(--primary-darker)">${t("total")}: ${total} ج.م</span></div><table class="data-table"><thead><tr><th>${t("member_name")}</th><th>${t("a_date")}</th><th>${t("amount")}</th><th>${t("a_note")}</th>${canDelete()?"<th></th>":""}</tr></thead><tbody>${entRows}</tbody></table></section>`;}
+
+function viewEvents(){
+ const govOpts='<option value="">'+t("select_gov")+'</option>'+GOVS.map(g=>'<option value="'+g+'">'+g+'</option>').join("");
+ const statusColors={planned:'var(--accent)',active:'var(--primary)',done:'var(--primary-darker)',cancelled:'var(--danger)'};
+ const typeIcons={convoy:'🚐',training:'📚',meeting:'📋',other:'📌'};
+ const form=isAdmin()?`<section class="panel"><h2>＋ ${t("new_event")}</h2>
+  <form id="eventForm" class="grid-form">
+   <label class="fld">${t("event_name")}<input name="name" required></label>
+   <label class="fld">${t("event_type")}<select name="type"><option value="convoy">${t("type_convoy")}</option><option value="training">${t("type_training")}</option><option value="meeting">${t("type_meeting")}</option><option value="other">${t("type_other")}</option></select></label>
+   <label class="fld">${t("event_date")}<input name="date" type="date" required></label>
+   <label class="fld">${t("p_gov")}<select name="governorate">${govOpts}</select></label>
+   <label class="fld">${t("event_loc")}<input name="location"></label>
+   <label class="fld">${t("event_status")}<select name="status"><option value="planned">${t("status_planned")}</option><option value="active">${t("status_active")}</option><option value="done">${t("status_done")}</option><option value="cancelled">${t("status_cancelled")}</option></select></label>
+   <textarea name="description" placeholder="${t("event_desc")}"></textarea>
+   <button class="btn-primary" type="submit">${t("create")}</button></form></section>`:"";
+ const cards=state.events.length?state.events.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>{
+  const icon=typeIcons[e.type]||'📌';const sColor=statusColors[e.status]||'var(--muted)';
+  const sLabel={'planned':t("status_planned"),'active':t("status_active"),'done':t("status_done"),'cancelled':t("status_cancelled")}[e.status]||e.status;
+  return `<div class="folder-card" style="cursor:default">
+   <div class="folder-icon">${icon}</div>
+   <div class="folder-body"><div class="folder-name">${esc(e.name)}</div>
+    <div class="folder-sub">${e.date?esc(e.date)+" · ":""}${e.governorate?esc(e.governorate)+" · ":""}${e.location?esc(e.location)+" · ":""}<span style="background:${sColor};color:#fff;padding:2px 8px;border-radius:12px;font-size:.72rem">${sLabel}</span></div>
+    ${e.description?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">${esc(e.description)}</div>`:""}</div>
+   ${isAdmin()?`<select class="evt-status" data-eid="${e.id}" style="font-size:.75rem;padding:3px 6px;border-radius:6px;border:1px solid var(--border)"><option value="planned"${e.status==="planned"?" selected":""}>${t("status_planned")}</option><option value="active"${e.status==="active"?" selected":""}>${t("status_active")}</option><option value="done"${e.status==="done"?" selected":""}>${t("status_done")}</option><option value="cancelled"${e.status==="cancelled"?" selected":""}>${t("status_cancelled")}</option></select>
+    <button class="btn-danger-sm" data-delevt="${e.id}">🗑</button>`:""}</div>`;}).join(""):`<p class="muted">${t("no_events")}</p>`;
+ return `<h1 class="page-title">📅 ${t("events")}</h1>${form}<section class="panel"><h2>${t("events_list")}</h2><div class="folders">${cards}</div></section>`;
+}
+function viewUsers(){
+ const addForm=`<section class="panel"><h2>＋ ${lang==="ar"?"إضافة مستخدم جديد":"Add new user"}</h2><form id="addUserForm" class="grid-form"><label class="fld">${lang==="ar"?"الاسم":"Name"}<input name="full_name" required></label><label class="fld">${t("phone")}<input name="phone" required inputmode="tel" dir="ltr"></label><label class="fld">${t("national_id")}<input name="national_id" required dir="ltr"></label><label class="fld">${lang==="ar"?"السن":"Age"}<input name="age" type="number" min="10" max="99" required></label><label class="fld">${t("email")}<input name="email" type="email" required dir="ltr"></label><label class="fld">${t("password")}<input name="password" type="password" required minlength="6"></label><label class="fld">${t("the_role")}<select name="role"><option value="user">${t("role_user")}</option><option value="admin">${t("role_admin")}</option></select></label><button class="btn-primary" type="submit">${t("create")}</button></form></section>`;
+ const cards=state.users.map((u,i)=>{const isAdm=u.role==="admin";const isSelf=state.session&&u.id===state.session.uid;
+  const tabId="utab_"+i;
+  const permRows=isAdm?"":state.projects.map(p=>{const cur=(u.assigned||[]).find(a=>(typeof a==="object"?a.id:a)===p.id);const perm=cur?(typeof cur==="object"?cur.perm:"edit"):"none";return `<div class="perm-row"><label>${esc(p.name)}</label><select data-perm="${i}" data-pid="${p.id}"><option value="none"${perm==="none"?" selected":""}> — </option><option value="read"${perm==="read"?" selected":""}>📖 ${lang==="ar"?"قراءة":"Read"}</option><option value="edit"${perm==="edit"?" selected":""}>✏️ ${lang==="ar"?"تعديل":"Edit"}</option></select></div>`;}).join("");
+  return `<div class="user-profile">
+   <div class="user-header">
+    <div class="user-avatar" style="background:${isAdm?"var(--primary)":"var(--muted)"}">${esc((u.full_name||u.username||"?").charAt(0))}</div>
+    <div class="user-info"><h3>${esc(u.full_name||u.username||u.email)}</h3><div class="meta">${esc(u.email||"")} · ${esc(u.phone||"")}${u.age?" · "+u.age:""} · <span class="pill">${esc(u.code||"—")}</span> · <b>${isAdm?t("role_admin"):t("role_user")}</b></div></div>
+    <div class="user-actions">
+     <button class="btn-sm btn-reset" data-resetpw="${esc(u.email||"")}" title="Reset Password">🔑 ${lang==="ar"?"إعادة تعيين":"Reset PW"}</button>
+     ${!isSelf?`<button class="btn-danger-sm" data-deluser="${i}">🗑</button>`:""}
+    </div>
+   </div>
+   <div class="user-tabs">
+    <button class="user-tab active" onclick="document.querySelectorAll('.ut-${i}').forEach(d=>d.style.display='none');document.getElementById('ut-${i}-access').style.display='block';this.parentElement.querySelectorAll('.user-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');">${lang==="ar"?"الصلاحيات / Access":"Access Rights"}</button>
+    <button class="user-tab" onclick="document.querySelectorAll('.ut-${i}').forEach(d=>d.style.display='none');document.getElementById('ut-${i}-profile').style.display='block';this.parentElement.querySelectorAll('.user-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');">${lang==="ar"?"الملف الشخصي / Profile":"Profile"}</button>
+   </div>
+   <div class="user-body ut-${i}" id="ut-${i}-access">
+    <div class="user-section"><div class="user-section-title">${lang==="ar"?"الدور والصلاحيات العامة / ROLE & GENERAL":"ROLE & GENERAL"}</div>
+     <div class="perm-grid">
+      <div class="perm-row"><label>${t("role_admin")}</label><label class="toggle"><input type="checkbox" data-role="${i}" ${isAdm?"checked":""}><span class="slider"></span></label></div>
+      ${!isAdm?`<div class="perm-row"><label>${t("can_delete")}</label><label class="toggle"><input type="checkbox" data-candel="${i}" ${u.canDelete?"checked":""}><span class="slider"></span></label></div>`:""}
+     </div>
+    </div>
+    ${!isAdm?`<div class="user-section"><div class="user-section-title">${t("screen_access")}</div>
+     <div class="perm-grid">${["dashboard","volunteers","projects","clinics","events"].map(s=>'<div class="perm-row"><label>'+({'dashboard':t("dashboard"),'volunteers':t("volunteers"),'projects':t("projects"),'clinics':t("clinics"),'events':t("events")}[s]||s)+'</label><label class="toggle"><input type="checkbox" data-screen="'+i+'" value="'+s+'" '+((u.screen_access||[]).includes(s)?'checked':'')+'><span class="slider"></span></label></div>').join("")}</div>
+    </div>
+    <div class="user-section"><div class="user-section-title">${lang==="ar"?"صلاحيات القوافل / CONVOYS":"CONVOYS"}</div>
+     <div class="perm-grid">${permRows||`<div class="perm-row muted" style="grid-column:1/-1;text-align:center">${t("no_projects")}</div>`}</div>
+    </div>
+    <div class="user-section"><div class="user-section-title">${lang==="ar"?"صلاحيات العيادات / CLINICS":"CLINICS"}</div>
+     <div class="perm-grid">${state.clinics.map(cl=>{const ca=(u.assigned_clinics||[]).find(a=>typeof a==='object'?(a.id===cl.id):(a===cl.id));const role=ca?(typeof ca==='object'?ca.role:'team_leader'):'none';return '<div class="perm-row"><label>'+esc(cl.name)+'</label><select data-clinicrole="'+i+'" data-cid="'+cl.id+'" style="font-size:.78rem;padding:3px;border-radius:4px"><option value="none"'+(role==='none'?' selected':'')+'>—</option><option value="team_leader"'+(role==='team_leader'?' selected':'')+'>🔧 '+t("team_leader")+'</option><option value="volunteer"'+(role==='volunteer'?' selected':'')+'>👀 '+t("volunteer_role")+'</option></select></div>';}).join("")||`<div class="perm-row muted" style="grid-column:1/-1;text-align:center">${t("no_clinics")}</div>`}</div>
+    </div>`:`<div class="perm-row muted">${t("sees_all")}</div>`}
+   </div>
+   <div class="user-body ut-${i}" id="ut-${i}-profile" style="display:none">
+    <div class="user-section"><div class="user-section-title">${lang==="ar"?"بيانات المستخدم / USER INFO":"USER INFO"}</div>
+     <div class="edit-field"><label>${t("name")}:</label><input value="${esc(u.full_name||"")}" data-editname="${i}"></div>
+     <div class="edit-field"><label>${t("phone")}:</label><input value="${esc(u.phone||"")}" data-editphone="${i}" dir="ltr"></div>
+     <div class="edit-field"><label>${t("email")}:</label><input value="${esc(u.email||"")}" disabled style="opacity:.6" dir="ltr"><span style="font-size:.7rem;color:var(--muted)">${lang==="ar"?"(لا يمكن تغييره)":"(cannot change)"}</span></div>
+     <button class="btn-primary" style="margin-top:8px;font-size:.82rem;padding:8px 16px" data-saveprofile="${i}">💾 ${t("save")}</button>
+    </div>
+   </div>
+  </div>`;}).join("");
+ return `<h1 class="page-title">${t("access_title")}</h1>${addForm}<section class="panel"><h2>${lang==="ar"?"المستخدمون الحاليون / Current Users":"Current Users"}</h2>${cards}<div style="margin-top:16px"><button class="btn-primary" id="saveAccess">${t("save")}</button></div></section>`;
+}
+
+function viewSettings(){const s=settings;return `<h1 class="page-title">${t("settings")}</h1><section class="panel"><h2>🔗 ${t("form_url")} / Google Apps Script</h2><form id="setForm" class="grid-form"><label class="fld">${t("form_url")}<input name="formUrl" value="${esc(s.formUrl)}" placeholder="https://ibf-form.netlify.app/" dir="ltr"></label>
+   <label class="fld">${lang==="ar"?"رابط صفحة QR / QR Page URL":"QR Page URL"}<input name="qrUrl" value="${esc(s.qrUrl||'')}" placeholder="https://ibf-qrcode.netlify.app/" dir="ltr"></label><label class="fld">${t("gs_url")}<input name="gsUrl" value="${esc(s.gsUrl)}" placeholder="https://script.google.com/macros/s/XXX/exec" dir="ltr"></label><label class="fld">${t("gs_token")}<input name="gsToken" value="${esc(s.gsToken)}" dir="ltr"></label><label class="chk" style="align-self:end"><input type="checkbox" name="autosync" ${s.autosync?"checked":""}> ${t("autosync")}</label><button class="btn-primary" type="submit">${t("save")}</button></form><p class="hint">${t("last_sync")}: ${_lastSync?new Date(_lastSync).toLocaleString():"—"}</p><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-secondary" id="syncNow">⟳ ${t("sync_now")}</button><button class="btn-ghost" id="testUrl" style="color:var(--text);border-color:var(--border)">🔎 فحص الرابط</button></div></section><section class="panel"><h2>💾 ${t("db_section")}</h2><p class="hint">${t("backup_hint")}</p><div class="toolbar" style="flex-wrap:wrap;gap:10px"><button class="btn-primary" id="expAllXlsx">⬇ ${t("export_all_xlsx")}</button><button class="btn-secondary" id="backupJson">${t("backup_json")}</button><input type="file" id="restoreFile" accept=".json" style="max-width:220px"><button class="btn-secondary" id="restoreBtn">⬆ ${t("restore_json")}</button></div></section>`;}
+
+function showQR(pid,cname){const p=state.projects.find(x=>x.id===pid);if(!p)return;const car=cname||p.name;const base=settings.qrUrl||(location.protocol==='file:'?'https://hes12ham.github.io/ibf-dashboard/qr-attendance.html':(location.origin+location.pathname.replace(/[^\/]*$/,'')+'qr-attendance.html'));const url=base+(base.includes("?")?"&":"?")+"project="+encodeURIComponent(pid)+"&caravan="+encodeURIComponent(car)+(p.village?"&village="+encodeURIComponent(p.village):"")+(p.qr_message?"&msg="+encodeURIComponent(p.qr_message):"");document.getElementById("qrTitle").textContent=car;document.getElementById("qrSub").textContent=t("scan_to_join");document.getElementById("qrUrl").textContent=url;const box=document.getElementById("qrBox");box.innerHTML="";if(typeof QRCode!=="undefined"){new QRCode(box,{text:url,width:220,height:220,colorDark:"#0b7ea3",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}else{box.innerHTML='<p class="muted">QR library not loaded</p>';}document.getElementById("qrOverlay").style.display="flex";}
+function downloadQR(){const box=document.getElementById("qrBox");const cv=box.querySelector("canvas");const img=box.querySelector("img");let data=cv?cv.toDataURL("image/png"):(img?img.src:null);if(!data)return;const name=(document.getElementById("qrTitle").textContent||"caravan").replace(/[^\w\u0600-\u06FF-]+/g,"_");const a=document.createElement("a");a.href=data;a.download="QR_"+name+".png";a.click();}
+
+function syncFromSheet(silent){const gurl=effGs();if(!gurl){if(!silent){setFlash(t("sync_off"),"error");render();}return;}if(_syncing)return;_syncing=true;const cb="__ibfCb"+Date.now();const cleanup=s=>{try{document.body.removeChild(s);}catch(e){}delete window[cb];_syncing=false;};const sc=document.createElement("script");const to=setTimeout(()=>{cleanup(sc);if(!silent){setFlash("Sync timeout","error");render();}},15000);window[cb]=resp=>{clearTimeout(to);mergeSubmissions(Array.isArray(resp)?resp:(resp&&resp.rows)||[]).then(()=>{_lastSync=Date.now();if(!silent){setFlash(t("sync_done"));fetchAll(false);}}).catch(e=>{if(!silent){setFlash("Sync error: "+e.message,"error");render();}});cleanup(sc);};const sep=gurl.includes("?")?"&":"?";sc.src=gurl+sep+"callback="+cb+(settings.gsToken?"&token="+encodeURIComponent(settings.gsToken):"");sc.onerror=()=>{clearTimeout(to);cleanup(sc);if(!silent){setFlash("تعذّر الاتصال بـ Apps Script","error");render();}};document.body.appendChild(sc);}
+async function mergeSubmissions(rows){if(!rows||!rows.length)return;let list;if(!Array.isArray(rows[0])){list=rows.map(o=>{const g=f=>{const k=_findKey(o,FIELD_KW[f]);return k!=null?o[k]:null;};return{full_name:String(g("name")||"").trim(),code:g("code")!=null&&String(g("code")).trim()!==""?String(g("code")).trim():null,phone:g("phone")!=null&&String(g("phone")).trim()!==""?String(g("phone")).trim():null,national_id:g("national_id")!=null&&String(g("national_id")).trim()!==""?String(g("national_id")).trim():null,commitment_score:toInt(g("commitment")),project_id:null,caravan:g("caravan")!=null&&String(g("caravan")).trim()!==""?String(g("caravan")).trim():null,_ts:g("timestamp")!=null&&String(g("timestamp")).trim()!==""?String(g("timestamp")).trim():null,email:g("email")!=null&&String(g("email")).trim()!==""?String(g("email")).trim():null};}).filter(x=>x.full_name);}else{list=parseVolunteerSheet(rows).map(x=>Object.assign({project_id:null,caravan:null,_ts:null},x));}for(const p of list){let v=state.volunteers.find(x=>(p._ts&&x._ts===p._ts)||(p.code&&x.code===p.code)||(p.national_id&&x.national_id===p.national_id));if(!v){const code=p.code||await nextCode();await restAdd('volunteers',{full_name:p.full_name,code,phone:p.phone||null,national_id:p.national_id||null,commitment_score:p.commitment_score??null,project_id:p.project_id||null,caravan:p.caravan||null,_ts:p._ts||null,email:p.email||null,participations:(p.project_id!=null||p.caravan)?[{_k:(p._ts||"")+"_"+(p.project_id||"")+"_"+(p.caravan||""),project_id:p.project_id||null,caravan:p.caravan||null,date:p._ts||new Date().toISOString()}]:[]});}else{const patch={};if(p.project_id!=null&&v.project_id!==p.project_id)patch.project_id=p.project_id;if(p.caravan&&v.caravan!==p.caravan)patch.caravan=p.caravan;if(p.email&&!v.email)patch.email=p.email;if(p.project_id!=null||p.caravan){const pk=(p._ts||"")+"_"+(p.project_id||"")+"_"+(p.caravan||"");const parts=Array.isArray(v.participations)?v.participations:[];if(!parts.some(x=>x._k===pk))patch.participations=[...parts,{_k:pk,project_id:p.project_id,caravan:p.caravan||null,date:p._ts||new Date().toISOString()}];}if(Object.keys(patch).length)await restUpdate('volunteers',v.id,patch);}}}
+function startAutoSync(){if(_syncTimer){clearInterval(_syncTimer);_syncTimer=null;}if(isAdmin()&&effGs()){if(settings.autosync)_syncTimer=setInterval(()=>syncFromSheet(true),20000);}}
+
+function renderRegister(qp){const project=qp.get("project")||"";const caravan=qp.get("caravan")||"";document.documentElement.lang="ar";document.documentElement.dir="rtl";document.documentElement.setAttribute("data-theme","light");document.getElementById("app").innerHTML=`<div class="auth-wrap"><div class="auth-card"><img class="auth-logo" src="${LOGO}" alt="IBF"><h1>${lang==="ar"?"تسجيل حضور":"Log attendance"}</h1>${caravan?`<div style="display:inline-block;background:rgba(23,189,239,.12);color:var(--primary-darker);border:1px solid rgba(23,189,239,.4);border-radius:30px;padding:6px 16px;font-weight:700;margin:10px 0 6px">${lang==="ar"?"قافلة":"Caravan"}: ${esc(caravan)}</div>`:""}<form id="regForm" style="margin-top:14px"><label>${lang==="ar"?"أدخل الكود الخاص بك":"Enter your code"} *</label><input name="code" required placeholder="V0001" dir="ltr" id="codeInput" autocomplete="off" style="text-align:center;font-size:1.3rem;letter-spacing:3px;font-weight:700"><div id="codePrev" style="min-height:26px;text-align:center;font-size:.9rem;color:var(--muted);padding:4px 0"></div><div id="regErr" class="flash flash-error" style="display:none"></div><button class="btn-primary" type="submit" id="regBtn">${lang==="ar"?"تسجيل الحضور":"Log attendance"}</button></form><p class="muted" style="font-size:.8rem;margin-top:10px">${lang==="ar"?"ليس لديك كود؟ سجّل حساب جديد أولًا من صفحة الدخول.":"No code? Register first."}</p></div></div>`;const gsUrl=qp.get("gs")||effGs();let _lookupCache=null,_debT=null;const ci=document.getElementById("codeInput");const prev=document.getElementById("codePrev");function lookupCode(code,cb){if(!gsUrl){cb(null);return;}if(_lookupCache){cb(_lookupCache.find(r=>String(r.code||"").trim().toUpperCase()===code)||null);return;}const cn="__ibfPrev"+Date.now();const sc=document.createElement("script");const cl=()=>{try{document.body.removeChild(sc);}catch(_){}delete window[cn];};const to=setTimeout(()=>{cl();cb(null);},10000);window[cn]=rows=>{clearTimeout(to);cl();_lookupCache=Array.isArray(rows)?rows:[];cb(_lookupCache.find(r=>String(r.code||"").trim().toUpperCase()===code)||null);};sc.onerror=()=>{clearTimeout(to);cl();cb(null);};sc.src=gsUrl+(gsUrl.includes("?")?"&":"?")+"callback="+cn;document.body.appendChild(sc);}ci.addEventListener("input",()=>{clearTimeout(_debT);const c=ci.value.trim().toUpperCase();if(c.length<2){prev.innerHTML="";return;}_debT=setTimeout(()=>{prev.innerHTML="⏳ جارٍ البحث...";lookupCode(c,v=>{if(v){const nm=v.name||v.full_name||v["الاسم"]||"";prev.innerHTML="✅ <b>"+esc(nm)+"</b>"+(v.phone?" · "+esc(v.phone):"");}else{prev.innerHTML="<span style=\"color:var(--danger)\">❌ كود غير مسجّل</span>";}});},500);});const f=document.getElementById("regForm");f.onsubmit=e=>{e.preventDefault();const err=document.getElementById("regErr");err.style.display="none";const code=ci.value.trim().toUpperCase();if(!code){err.style.display="block";err.textContent="أدخل الكود.";return;}if(!gsUrl){err.style.display="block";err.textContent="GS_URL not configured.";return;}const btn=document.getElementById("regBtn");btn.disabled=true;btn.textContent="جارٍ البحث...";lookupCode(code,vol=>{if(!vol){btn.disabled=false;btn.textContent="تسجيل الحضور";err.style.display="block";err.textContent="كود غير مسجّل!";return;}const volName=vol.name||vol.full_name||vol["الاسم"]||"";btn.textContent="جارٍ تسجيل: "+volName+"...";const data={code,project,caravan,name:volName,phone:vol.phone||""};const cb="__ibfSub"+Date.now();const sc=document.createElement("script");const cl=()=>{try{document.body.removeChild(sc);}catch(_){}delete window[cb];};const to=setTimeout(()=>{cl();showErr("انتهت المهلة.");},15000);function showOk(){const msg="تم تسجيل حضوري في قافلة "+caravan+" - "+code+" (IBF)";document.getElementById("app").innerHTML=`<div class="auth-wrap"><div class="auth-card"><div style="width:74px;height:74px;border-radius:50%;background:var(--primary);color:#fff;font-size:2.4rem;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">✓</div><h1>تم تسجيل حضورك بنجاح</h1><p style="font-weight:700;font-size:1.1rem;margin:8px 0">${esc(volName)}</p><p class="muted">الكود: <b>${esc(code)}</b>${caravan?" · قافلة: <b>"+esc(caravan)+"</b>":""}</p><a href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" class="btn-secondary" style="display:inline-block;margin-top:14px;text-decoration:none">📱 شارك على واتساب</a></div></div>`;}function showErr(m){err.style.display="block";err.textContent=m;btn.disabled=false;btn.textContent="تسجيل الحضور";}window[cb]=resp=>{clearTimeout(to);cl();if(resp&&resp.ok)showOk();else if(resp&&resp.error==="duplicate")showErr("أنت مسجّل بالفعل!");else showErr("لم يقبل الخادم.");};sc.onerror=()=>{clearTimeout(to);cl();showErr("تعذّر الاتصال.");};const params=new URLSearchParams(Object.assign({action:"add",callback:cb},data));sc.src=gsUrl+(gsUrl.includes("?")?"&":"?")+params.toString();document.body.appendChild(sc);});};}
+
+function bind(){
+ const $=s=>document.querySelector(s);
+ const tg=id=>{const e=document.getElementById(id);if(e)e.onclick=()=>{theme=theme==="light"?"dark":"light";localStorage.setItem("ibf:theme",theme);render();};};
+ const lg=id=>{const e=document.getElementById(id);if(e)e.onclick=()=>{lang=lang==="ar"?"en":"ar";localStorage.setItem("ibf:lang",lang);render();};};
+ ["themeBtn","themeA"].forEach(tg);
+ // Dashboard filters (safe — runs after DOM is ready)
+ const dfDiv=document.getElementById("dashFilters");
+ if(dfDiv&&state.session&&state.view==="dashboard"){try{
+  const projs=visibleProjects();const allVols=visibleVolunteers();
+  const govs=[...new Set(projs.map(p=>p.governorate).filter(Boolean))];
+  const skills=[...new Set(allVols.flatMap(v=>(v.skills||[]).map(s=>s.split("/")[0].trim())).filter(Boolean))];
+  const df=window._df;const vCount=allVols.filter(v=>{let ok=true;if(df.project)ok=ok&&v.project_id===df.project;if(df.gov){const gp=projs.filter(p=>p.governorate===df.gov).map(p=>p.id);ok=ok&&gp.includes(v.project_id);}if(df.skill)ok=ok&&(v.skills||[]).some(s=>s.includes(df.skill));if(df.gender){const g=v._reg&&v._reg.gender?v._reg.gender:(v.gender||"");ok=ok&&g===df.gender;}return ok;}).length;
+  dfDiv.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:.82rem;color:var(--primary-darker)">🔍 '+(lang==="ar"?"فلاتر / Filters":"Filters")+':</b>'+
+   '<select id="dfProject" style="font-size:.8rem;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text)"><option value="">'+(lang==="ar"?"كل القوافل / All":"All")+'</option>'+projs.map(p=>"<option value='"+p.id+"'"+(df.project===p.id?" selected":"")+">"+esc(p.name)+"</option>").join("")+"</select>"+
+   '<select id="dfGov" style="font-size:.8rem;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text)"><option value="">'+(lang==="ar"?"كل المحافظات / All":"All")+'</option>'+govs.map(g=>"<option value='"+esc(g)+"'"+(df.gov===g?" selected":"")+">"+esc(g)+"</option>").join("")+"</select>"+
+   '<select id="dfSkill" style="font-size:.8rem;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text)"><option value="">'+(lang==="ar"?"كل المهارات / All":"All")+'</option>'+skills.map(s=>"<option value='"+esc(s)+"'"+(df.skill===s?" selected":"")+">"+esc(s)+"</option>").join("")+"</select>"+
+   '<select id="dfGender" style="font-size:.8rem;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text)"><option value="">'+(lang==="ar"?"الكل / All":"All")+'</option><option value="ذكر"'+(df.gender==="ذكر"?" selected":"")+'>'+(lang==="ar"?"ذكر / Male":"Male")+'</option><option value="أنثى"'+(df.gender==="أنثى"?" selected":"")+'>'+(lang==="ar"?"أنثى / Female":"Female")+'</option></select>'+
+   '<button id="dfClear" style="font-size:.76rem;padding:4px 10px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer">✕ '+(lang==="ar"?"مسح":"Clear")+'</button>'+
+   '<span class="pill" style="margin-inline-start:auto">'+vCount+' '+(lang==="ar"?"متطوع":"vol.")+'</span></div>';
+  ["dfProject","dfGov","dfSkill","dfGender"].forEach(id=>{const el=document.getElementById(id);if(el)el.onchange=window._applyDf;});
+  const clr=document.getElementById("dfClear");if(clr)clr.onclick=()=>{window._df={project:"",gov:"",skill:"",gender:""};render();};
+ }catch(e){console.warn("Filter render error:",e);dfDiv.innerHTML="";}}["langBtn","langA"].forEach(lg);
+ if(!state.session){
+  const lf=$("#loginForm");if(lf)lf.onsubmit=e=>{e.preventDefault();const f=e.target;const btn=f.querySelector('button');btn.disabled=true;btn.textContent='⏳...';auth.signInWithEmailAndPassword(f.email.value.trim(),f.password.value).catch(err=>{btn.disabled=false;btn.textContent=t("login_btn");setFlash(authErr(err),"error");render();});};
+  const rf=$("#registerForm");if(rf)rf.onsubmit=e=>{e.preventDefault();const f=e.target;const email=f.email.value.trim();const fv={full_name:f.full_name.value.trim(),phone:f.phone.value.trim(),national_id:f.national_id.value.trim(),age:toInt(f.age.value)};(async()=>{_registering=true;const photo=f.id_photo&&f.id_photo.files[0]?await compressImage(f.id_photo.files[0]):null;const cred=await auth.createUserWithEmailAndPassword(email,f.password.value);const u=cred.user.uid;const code=await nextCode();await restSet("users",u,{username:email,email,role:"user",assigned:[],canDelete:false,full_name:fv.full_name,phone:fv.phone,national_id:fv.national_id,age:fv.age,code});await restAdd('volunteers',{full_name:fv.full_name,code,phone:fv.phone||null,national_id:fv.national_id||null,commitment_score:null,project_id:null,caravan:null,_ts:null,age:fv.age,email,participations:[],id_photo:photo});state.session={uid:u,email,username:email,role:"user"};state.view="profile";_registering=false;setFlash((lang==="ar"?"مرحبًا! كودك الفريد: ":"Welcome! Your code: ")+code);startListeners();})().catch(err=>{_registering=false;setFlash(authErr(err),"error");render();});};
+  const tr=$("#toRegister");if(tr)tr.onclick=()=>{state.authView="register";render();};
+  const tl=$("#toLogin");if(tl)tl.onclick=()=>{state.authView="login";render();};return;}
+ document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{state.view=b.dataset.go;state.openProject=null;state.openClinic=null;state.openEvent=null;state.clMonth=null;_selMode=false;render();});
+ const lo=$("#logoutBtn");if(lo)lo.onclick=()=>{auth.signOut();};
+ const vf=$("#volForm");if(vf)vf.onsubmit=e=>{e.preventDefault();const f=e.target;(async()=>{const code=f.code.value.trim()||await nextCode();const photo=f.id_photo&&f.id_photo.files[0]?await compressImage(f.id_photo.files[0]):null;await restAdd('volunteers',{full_name:f.full_name.value.trim(),code,phone:f.phone.value.trim()||null,national_id:f.national_id.value.trim()||null,commitment_score:toInt(f.commitment_score.value),project_id:f.project_id.value||null,email:f.email.value.trim()||null,caravan:null,_ts:null,participations:[],id_photo:photo});await done("تمت إضافة المتطوع / Added");})().catch(fail);};
+ const pf=$("#projForm");if(pf)pf.onsubmit=e=>{e.preventDefault();const f=e.target;C.proj().add({name:f.name.value.trim(),governorate:f.governorate.value||null,funder:f.funder.value.trim()||null,supervisor:f.supervisor.value.trim()||null,team:f.team.value.trim()||null,total_cases:toInt(f.total_cases.value)||0,total_examinations:toInt(f.total_examinations.value)||0,notes:f.notes.value.trim()||null,caravans:[]}).then(async()=>done("تم إنشاء المشروع | Created")).catch(fail);};
+ document.querySelectorAll("[data-open]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-delp]"))return;state.openProject=c.dataset.open;render();});
+ document.querySelectorAll(".cvselall").forEach(a=>a.onclick=()=>{const tbl=a.closest("table");if(tbl)tbl.querySelectorAll(".cvsel").forEach(c=>c.checked=a.checked);});
+ document.querySelectorAll(".cvdel").forEach(b=>b.onclick=()=>{if(!canDelete()){setFlash(t("no_del_perm"),"error");return;}const det=b.closest("details");const ids=det?[...det.querySelectorAll(".cvsel:checked")].map(c=>c.value):[];if(!ids.length){setFlash(t("sel_none"),"error");return;}if(!confirm((lang==="ar"?"تأكيد حذف ":"Delete ")+ids.length+(lang==="ar"?" متطوع؟":" volunteers?")))return;Promise.all(ids.map(id=>restDel('volunteers',id))).then(async()=>done((lang==="ar"?"تم حذف ":"Deleted ")+ids.length)).catch(fail);});
+ const bp=$("#backProjects");if(bp)bp.onclick=()=>{state.openProject=null;render();};
+ const epj=$("#expProject");if(epj)epj.onclick=()=>{const p=state.projects.find(x=>x.id===state.openProject);if(!p)return;exportVols(state.volunteers.filter(v=>v.project_id===p.id),"project_"+(p.name||"").replace(/[^\w\u0600-\u06FF]+/g,"_")+".xlsx");};
+ document.querySelectorAll(".cv-exp").forEach(b=>b.onclick=()=>{const pid=b.dataset.expp,cn=b.dataset.expc;exportVols(state.volunteers.filter(v=>v.project_id===pid&&v.caravan===cn),"caravan_"+(cn||"").replace(/[^\w\u0600-\u06FF]+/g,"_")+".xlsx");});
+ const ecr=$("#expConvoyReport");if(ecr)ecr.onclick=async()=>{const p=state.projects.find(x=>x.id===state.openProject);if(!p)return;
+ if(typeof ExcelJS==="undefined"){setFlash("ExcelJS not loaded","error");return;}
+ const pvols=state.volunteers.filter(v=>v.project_id===p.id);
+ const wb=new ExcelJS.Workbook();
+ const purple={argb:'FFA02B93'};const blue={argb:'FF00B0F0'};const gray={argb:'FFE6E6E6'};const white={argb:'FFFFFFFF'};
+ const bdr={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+ const titleFont={name:'Cairo',size:16,bold:true,color:{argb:'FFFFFFFF'}};
+ const hdrFont={name:'Cairo',size:12,bold:true};
+ const dataFont={name:'Cairo',size:11,bold:false};
+ const center={horizontal:'center',vertical:'middle',wrapText:true};
+ const rtl={horizontal:'right',vertical:'middle',wrapText:true};
+
+ // Sheet 1: Volunteers
+ const ws1=wb.addWorksheet('كشف المتطوعين',{views:[{rightToLeft:true}]});
+ ws1.columns=[{width:30},{width:12},{width:18},{width:20},{width:14},{width:14}];
+ ws1.mergeCells('A1:D2');ws1.mergeCells('E1:E2');
+ const t1=ws1.getCell('A1');t1.value='مؤسسة إبراهيم بدران / IBF Foundation';t1.font=titleFont;t1.fill={type:'pattern',pattern:'solid',fgColor:purple};t1.alignment=center;t1.border=bdr;
+ const t2=ws1.getCell('E1');t2.value='تقييم المتطوعين';t2.font=titleFont;t2.fill={type:'pattern',pattern:'solid',fgColor:purple};t2.alignment=center;t2.border=bdr;
+ ws1.mergeCells('A3:D3');
+ const s1=ws1.getCell('A3');s1.value='كشف متطوعين قافلة: '+(p.name||'');s1.font={name:'Cairo',size:16,bold:true,color:{argb:'FFFFFFFF'}};s1.fill={type:'pattern',pattern:'solid',fgColor:blue};s1.alignment=center;s1.border=bdr;
+ const e3=ws1.getCell('E3');e3.value='تقييم عام من ١ ل٥';e3.font={name:'Cairo',size:11,bold:false};e3.fill={type:'pattern',pattern:'solid',fgColor:blue};e3.alignment=center;e3.border=bdr;
+ const hdrs=['الأسم رباعي','الكود','رقم التليفون','رقم البطاقة','درجة الالتزام'];
+ hdrs.forEach((h,i)=>{const cell=ws1.getCell(4,i+1);cell.value=h;cell.font=hdrFont;cell.fill={type:'pattern',pattern:'solid',fgColor:gray};cell.alignment=center;cell.border=bdr;});
+ pvols.forEach((v,i)=>{const r=i+5;const vals=[v.full_name,v.code||'',v.phone||'',v.national_id||'',v.commitment_score??''];vals.forEach((val,j)=>{const cell=ws1.getCell(r,j+1);cell.value=val;cell.font=dataFont;cell.fill={type:'pattern',pattern:'solid',fgColor:white};cell.alignment=j===0?rtl:center;cell.border=bdr;});});
+
+ // Sheet 2: Expenses
+ const ws2=wb.addWorksheet('المصاريف',{views:[{rightToLeft:true}]});
+ ws2.columns=[{width:25},{width:14},{width:18},{width:14},{width:14},{width:14},{width:18},{width:14}];
+ ws2.mergeCells('A1:H1');
+ const et=ws2.getCell('A1');et.value='مصاريف قافلة: '+(p.name||'');et.font=titleFont;et.fill={type:'pattern',pattern:'solid',fgColor:blue};et.alignment=center;et.border=bdr;
+ const ehdrs=['الاسم','الدور','القافلة','بدل وجبة','بدل سفر','بدل انتقال','ملاحظة','التاريخ'];
+ ehdrs.forEach((h,i)=>{const cell=ws2.getCell(2,i+1);cell.value=h;cell.font=hdrFont;cell.fill={type:'pattern',pattern:'solid',fgColor:gray};cell.alignment=center;cell.border=bdr;});
+ (p.expenses||[]).forEach((e,i)=>{const r=i+3;[e.name,e.role||'',e.caravan||'',+e.meal||0,+e.travel||0,+e.transport||0,e.note||'',e.date||''].forEach((val,j)=>{const cell=ws2.getCell(r,j+1);cell.value=val;cell.font=dataFont;cell.alignment=center;cell.border=bdr;});});
+ const tr=3+(p.expenses||[]).length;ws2.mergeCells(tr,1,tr,3);
+ const tc=ws2.getCell(tr,1);tc.value='الإجمالي / Total';tc.font=hdrFont;tc.fill={type:'pattern',pattern:'solid',fgColor:purple};tc.font={name:'Cairo',size:12,bold:true,color:{argb:'FFFFFFFF'}};tc.alignment=center;tc.border=bdr;
+ [4,5,6].forEach(j=>{const cell=ws2.getCell(tr,j);cell.value=(p.expenses||[]).reduce((s,e)=>s+(+[0,0,0,e.meal,e.travel,e.transport][j-1]||0),0);cell.font={name:'Cairo',size:12,bold:true,color:{argb:'FFFFFFFF'}};cell.fill={type:'pattern',pattern:'solid',fgColor:purple};cell.alignment=center;cell.border=bdr;});
+
+ // Sheet 3: Attendance
+ const ws3=wb.addWorksheet('الحضور',{views:[{rightToLeft:true}]});
+ ws3.columns=[{width:25},{width:12},{width:18},{width:16}];
+ ws3.mergeCells('A1:D1');
+ const at=ws3.getCell('A1');at.value='سجل الحضور: '+(p.name||'');at.font=titleFont;at.fill={type:'pattern',pattern:'solid',fgColor:blue};at.alignment=center;at.border=bdr;
+ ['الاسم','الكود','القافلة','التاريخ'].forEach((h,i)=>{const cell=ws3.getCell(2,i+1);cell.value=h;cell.font=hdrFont;cell.fill={type:'pattern',pattern:'solid',fgColor:gray};cell.alignment=center;cell.border=bdr;});
+ let ar=3;pvols.forEach(v=>(v.participations||[]).filter(pp=>pp.project_id===p.id).forEach(pp=>{[v.full_name,v.code||'',pp.caravan||'',pp.date?pp.date.slice(0,10):''].forEach((val,j)=>{const cell=ws3.getCell(ar,j+1);cell.value=val;cell.font=dataFont;cell.alignment=center;cell.border=bdr;});ar++;}));
+
+ const buf=await wb.xlsx.writeBuffer();
+ const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='تقرير_قافلة_'+(p.name||'').replace(/[^\w\u0600-\u06FF]+/g,'_')+'.xlsx';a.click();
+};
+ document.querySelectorAll(".vol-role").forEach(sel=>sel.onchange=()=>{const vid=sel.dataset.vid;const role=sel.value;restUpdate("volunteers",vid,{convoy_role:role||null}).then(()=>{}).catch(e=>console.warn("Role update error:",e));});
+ const psr=$("#projSearch");if(psr)psr.oninput=()=>{const q=psr.value.trim().toLowerCase();document.querySelectorAll(".cv-item").forEach(d=>{if(q)d.open=true;});document.querySelectorAll('tr[data-s]').forEach(r=>{r.style.display=(!q||r.getAttribute("data-s").includes(q))?"":"none";});};
+ const cf=$("#clinicForm");if(cf)cf.onsubmit=e=>{e.preventDefault();const f=e.target;C.cli().add({name:f.name.value.trim(),governorate:f.governorate.value||null,city:f.city.value.trim()||null,funder:f.funder.value.trim()||null,leader:f.leader?f.leader.value.trim()||null:null,members:[],entries:[]}).then(async()=>done(lang==="ar"?"تم إنشاء العيادة":"Clinic created")).catch(fail);};
+ document.querySelectorAll("[data-openclinic]").forEach(c=>c.onclick=e=>{if(e.target.closest("[data-delclinic]"))return;state.openClinic=c.dataset.openclinic;state.clMonth=null;render();});
+ const gib=$("#globalImportBtn");if(gib)gib.onclick=()=>{const fi=document.getElementById("globalClinicImport");if(!fi||!fi.files.length){setFlash(lang==="ar"?"اختر ملف Excel":"Pick file","error");return;}const reader=new FileReader();reader.onload=ev=>{const wbx=XLSX.read(ev.target.result,{type:"array"});let totalM=0,totalE=0;wbx.SheetNames.forEach(sn=>{const ws=wbx.Sheets[sn];const rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false});let hIdx=-1;for(let i=0;i<rows.length;i++){if(rows[i]&&rows[i].some&&rows[i].some(c=>String(c||"").includes("اسم المتطوع"))){hIdx=i;break;}}if(hIdx<0)return;const clinic=state.clinics.find(cl=>sn.includes(cl.name)||cl.name.includes(sn));if(!clinic)return;const hdr=rows[hIdx];const dateStart=5;const dates=[];for(let j=dateStart;j<hdr.length;j++){const d=hdr[j];if(!d||String(d).includes("اجمالي"))continue;let dt;if(typeof d==="number")dt=new Date((d-25569)*86400000).toISOString().slice(0,10);else{const s=String(d);if(s.match(/\d{4}-\d{2}-\d{2}/))dt=s.slice(0,10);}if(dt)dates.push({col:j,date:dt});}const newM=[...(clinic.members||[])];const newE=[...(clinic.entries||[])];for(let i=hIdx+1;i<rows.length;i++){const r=rows[i]||[];const name=r[0]?String(r[0]).trim():"";if(!name||name.includes("الاجمالي"))continue;if(!newM.some(m=>m.name===name)){newM.push({id:uid(),name,national_id:r[1]?String(r[1]).trim():null,account_number:r[2]?String(r[2]).trim():null,bank:r[3]?String(r[3]).trim():null,job:r[4]?String(r[4]).trim():"متطوع"});totalM++;}dates.forEach(d=>{const val=+r[d.col];if(val>0&&!newE.some(e=>e.member===name&&e.date===d.date)){newE.push({id:uid(),member:name,date:d.date,amount:val,note:null});totalE++;}});}C.cli().doc(clinic.id).update({members:newM,entries:newE});});fi.value="";setTimeout(async()=>{await done(totalM+" عضو + "+totalE+" حضور / "+totalM+" members + "+totalE+" entries");},1500);};reader.readAsArrayBuffer(fi.files[0]);};
+ const geb=$("#globalExportBtn");if(geb)geb.onclick=()=>{const wb=XLSX.utils.book_new();state.clinics.forEach(cl=>{const members=cl.members||[];const entries=cl.entries||[];const allDates=[...new Set(entries.map(e=>e.date).filter(Boolean))].sort();const hdr=["اسم المتطوع","الرقم القومي","رقم الحساب","البنك","الوظيفة",...allDates,"الاجمالي"];const data=[["أتعاب متطوعين "+cl.name],hdr];members.forEach(m=>{const row=[m.name,m.national_id||"",m.account_number||"",m.bank||"",m.job||"متطوع"];let total=0;allDates.forEach(d=>{const e=entries.find(e=>e.member===m.name&&e.date===d);const amt=e?(+e.amount||0):0;row.push(amt||"");total+=amt;});row.push(total);data.push(row);});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),cl.name.slice(0,30));});XLSX.writeFile(wb,"all_clinics_"+new Date().toISOString().slice(0,10)+".xlsx");};
+ const bc=$("#backClinics");if(bc)bc.onclick=()=>{state.openClinic=null;render();};
+ document.querySelectorAll("[data-delclinic]").forEach(b=>b.onclick=()=>{if(!canDelete()){setFlash(t("no_del_perm"),"error");return;}if(!confirm(lang==="ar"?"حذف العيادة؟":"Delete clinic?"))return;C.cli().doc(b.dataset.delclinic).delete().then(async()=>done(lang==="ar"?"تم الحذف":"Deleted")).catch(fail);});
+ document.querySelectorAll("[data-addmem]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const c=state.clinics.find(x=>x.id===f.dataset.addmem);if(!c)return;const nm=f.mname.value.trim();if(!nm)return;if((c.members||[]).some(m=>m.name===nm)){setFlash(lang==="ar"?"العضو موجود":"Member exists","error");return;}C.cli().doc(c.id).update({members:[...(c.members||[]),{id:uid(),name:nm,national_id:f.mnid?f.mnid.value.trim()||null:null,account_number:f.maccount?f.maccount.value.trim()||null:null,bank:f.mbank?f.mbank.value.trim()||"MIDG":null,job:f.mjob?f.mjob.value||"متطوع":"متطوع"}]}).then(async()=>done(lang==="ar"?"تمت إضافة العضو":"Member added")).catch(fail);});
+ document.querySelectorAll("[data-addentry]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const c=state.clinics.find(x=>x.id===f.dataset.addentry);if(!c)return;const mem=f.emember.value.trim();const amt=+f.eamount.value;if(!mem||isNaN(amt)){setFlash(lang==="ar"?"اختر العضو وأدخل المبلغ":"Pick member & amount","error");return;}C.cli().doc(c.id).update({entries:[...(c.entries||[]),{id:uid(),member:mem,date:f.edate.value||curMonth()+"-01",amount:amt,note:f.enote.value.trim()||null}]}).then(async()=>done(lang==="ar"?"تم تسجيل البدل":"Allowance logged")).catch(fail);});
+ document.querySelectorAll("[data-delmem]").forEach(b=>b.onclick=()=>{if(!canDelete())return;if(!confirm(lang==="ar"?"حذف العضو؟":"Delete member?"))return;const c=state.clinics.find(x=>x.id===b.dataset.delmem);if(!c)return;const nm=decodeURIComponent(b.dataset.memname);C.cli().doc(c.id).update({members:(c.members||[]).filter(m=>m.name!==nm)}).catch(fail);});
+ document.querySelectorAll("[data-delentry]").forEach(b=>b.onclick=()=>{if(!canDelete())return;if(!confirm(lang==="ar"?"حذف هذا البدل؟":"Delete?"))return;const c=state.clinics.find(x=>x.id===b.dataset.delentry);if(!c)return;C.cli().doc(c.id).update({entries:(c.entries||[]).filter(en=>en.id!==b.dataset.entryid)}).catch(fail);});
+ const imb=$("#importMembersBtn");if(imb)imb.onclick=()=>{const fi=document.getElementById("importMembersFile");if(!fi||!fi.files.length){setFlash(lang==="ar"?"اختر ملف Excel أولًا":"Pick Excel file","error");return;}const c=state.clinics.find(x=>x.id===state.openClinic);if(!c)return;const reader=new FileReader();reader.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:"array"});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false});let headerIdx=-1;for(let i=0;i<rows.length;i++){const r=rows[i]||[];if(r.some(cell=>String(cell||"").includes("اسم المتطوع")||String(cell||"").toLowerCase().includes("volunteer"))){headerIdx=i;break;}}if(headerIdx<0){setFlash(lang==="ar"?"لم يتم العثور على صف العناوين":"Header row not found","error");return;}const newMembers=[...(c.members||[])];const newEntries=[...(c.entries||[])];let addedM=0,addedE=0;const hdr=rows[headerIdx];const dateStart=5;const dates=[];for(let j=dateStart;j<hdr.length;j++){const d=hdr[j];if(d&&String(d).includes("اجمالي"))continue;if(d){let dt;if(typeof d==="number"){dt=new Date((d-25569)*86400000).toISOString().slice(0,10);}else{const s=String(d);if(s.match(/\d{4}-\d{2}-\d{2}/))dt=s.slice(0,10);else continue;}if(dt)dates.push({col:j,date:dt});}}for(let i=headerIdx+1;i<rows.length;i++){const r=rows[i]||[];const name=r[0]?String(r[0]).trim():"";if(!name||name.includes("الاجمالي")||name.includes("اسم المتطوع"))continue;const nid=r[1]?String(r[1]).trim():null;const acc=r[2]?String(r[2]).trim():null;const bank=r[3]?String(r[3]).trim():null;const job=r[4]?String(r[4]).trim():"متطوع";if(!newMembers.some(m=>m.name===name)){newMembers.push({id:uid(),name,national_id:nid,account_number:acc,bank,job});addedM++;}dates.forEach(d=>{const val=+r[d.col];if(val>0&&!newEntries.some(e=>e.member===name&&e.date===d.date)){newEntries.push({id:uid(),member:name,date:d.date,amount:val,note:null});addedE++;}});}C.cli().doc(c.id).update({members:newMembers,entries:newEntries}).then(async()=>{await done((lang==="ar"?"تم استيراد ":"Imported ")+addedM+(lang==="ar"?" عضو + ":" members + ")+addedE+(lang==="ar"?" سجل حضور":" attendance records"));}).catch(fail);fi.value="";};reader.readAsArrayBuffer(fi.files[0]);};
+ const emb=$("#exportMembersBtn");if(emb)emb.onclick=()=>{const c=state.clinics.find(x=>x.id===state.openClinic);if(!c)return;const selM=(state.clMonth===null||state.clMonth===undefined)?curMonth():state.clMonth;const members=c.members||[];const entries=(c.entries||[]).filter(e=>!selM||entMonth(e)===selM);const allDates=[...new Set(entries.map(e=>e.date).filter(Boolean))].sort();const hdr=["اسم المتطوع / Name","الرقم القومي / ID","رقم الحساب / Account","البنك / Bank","الوظيفة / Job",...allDates,"الاجمالي / Total"];const data=[["أتعاب متطوعين "+c.name+" عن شهر "+(selM||"الكل")],hdr];members.forEach(m=>{const row=[m.name,m.national_id||"",m.account_number||"",m.bank||"",m.job||"متطوع"];let total=0;allDates.forEach(d=>{const e=entries.find(e=>e.member===m.name&&e.date===d);const amt=e?(+e.amount||0):0;row.push(amt||"");total+=amt;});row.push(total);data.push(row);});const totRow=["","","","","الاجمالي / Total"];allDates.forEach(d=>{totRow.push(entries.filter(e=>e.date===d).reduce((s,e)=>s+(+e.amount||0),0));});totRow.push(entries.reduce((s,e)=>s+(+e.amount||0),0));data.push(totRow);const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,c.name.slice(0,30));XLSX.writeFile(wb,"clinic_"+(c.name||"").replace(/[^\w\u0600-\u06FF]+/g,"_")+"_"+(selM||"all")+".xlsx");};
+ const clm=$("#clMonth");if(clm)clm.onchange=()=>{state.clMonth=clm.value;render();};
+ const icb=$("#importClinicBtn");if(icb)icb.onclick=()=>{const fi=document.getElementById("importClinicFile");if(!fi||!fi.files.length){setFlash(lang==="ar"?"اختر ملف Excel":"Pick Excel file","error");return;}const c=state.clinics.find(x=>x.id===state.openClinic);if(!c)return;const reader=new FileReader();reader.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:"array"});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false});let headerIdx=-1;for(let i=0;i<rows.length;i++){if(rows[i]&&rows[i].some&&rows[i].some(c=>String(c||"").includes("اسم المتطوع"))){headerIdx=i;break;}}if(headerIdx<0){setFlash("لم يتم العثور على صف العناوين","error");return;}const hdr=rows[headerIdx];const dateStart=5;const dates=[];for(let j=dateStart;j<hdr.length-1;j++){const d=hdr[j];if(d){const dt=typeof d==="number"?new Date((d-25569)*86400000).toISOString().slice(0,10):String(d).slice(0,10);dates.push({col:j,date:dt});}};let addedM=0,addedE=0;const newMembers=[...(c.members||[])];const newEntries=[...(c.entries||[])];for(let i=headerIdx+2;i<rows.length;i++){const r=rows[i]||[];const name=r[0]?String(r[0]).trim():"";if(!name||name.includes("الاجمالي"))continue;if(!newMembers.some(m=>m.name===name)){newMembers.push({id:uid(),name,national_id:r[1]?String(r[1]).trim():null,account_number:r[2]?String(r[2]).trim():null,bank:r[3]?String(r[3]).trim():null,job:r[4]?String(r[4]).trim():"متطوع"});addedM++;}dates.forEach(d=>{const val=+r[d.col];if(val>0&&!newEntries.some(e=>e.member===name&&e.date===d.date)){newEntries.push({id:uid(),member:name,date:d.date,amount:val,note:null});addedE++;}});}C.cli().doc(c.id).update({members:newMembers,entries:newEntries}).then(async()=>done(addedM+" عضو + "+addedE+" حضور / "+addedM+" members + "+addedE+" entries")).catch(fail);fi.value="";};reader.readAsArrayBuffer(fi.files[0]);};
+ const ec=$("#expClinic");if(ec)ec.onclick=()=>{const c=state.clinics.find(x=>x.id===state.openClinic);if(!c)return;const selM=(state.clMonth===null||state.clMonth===undefined)?curMonth():state.clMonth;const ents=(c.entries||[]).filter(en=>!selM||entMonth(en)===selM);const data=[["العضو","التاريخ","المبلغ","ملاحظة"]];ents.forEach(en=>data.push([en.member,en.date||"",+en.amount||0,en.note||""]));data.push([]);data.push(["الإجمالي","","",ents.reduce((s,en)=>s+(+en.amount||0),0)]);const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");XLSX.writeFile(wb,"clinic_"+(c.name||"").replace(/[^\w\u0600-\u06FF]+/g,"_")+"_"+(selM||"all")+".xlsx");};
+ document.querySelectorAll("[data-addexp]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const pid=f.dataset.addexp;const p=state.projects.find(x=>x.id===pid);if(!p)return;const nm=f.ename.value.trim();if(!nm)return;const exp={id:uid(),name:nm,role:f.erole.value,caravan:f.ecaravan.value||null,meal:+f.emeal.value||0,travel:+f.etravel.value||0,transport:+f.etransport.value||0,note:f.enote.value.trim()||null,date:new Date().toISOString().slice(0,10)};C.proj().doc(pid).update({expenses:[...(p.expenses||[]),exp]}).then(async()=>done(lang==="ar"?"تم تسجيل المصاريف":"Expense logged")).catch(fail);});
+ document.querySelectorAll("[data-delexp]").forEach(b=>b.onclick=()=>{if(!canDelete())return;if(!confirm(lang==="ar"?"حذف؟":"Delete?"))return;const pid=b.dataset.delexp;const p=state.projects.find(x=>x.id===pid);if(!p)return;C.proj().doc(pid).update({expenses:(p.expenses||[]).filter(e=>e.id!==b.dataset.expid)}).catch(fail);});
+ document.querySelectorAll(".cv-upload-attach").forEach(btn=>btn.onclick=async()=>{const fi=btn.previousElementSibling;if(!fi||!fi.files||!fi.files.length){setFlash(lang==="ar"?"اختر ملف أولاً":"Pick a file","error");return;}const pid=btn.dataset.pid;const cn=btn.dataset.cn;const p=state.projects.find(x=>x.id===pid);if(!p)return;btn.disabled=true;btn.textContent="⏳";const newAtts=[...(p.attachments||[])];try{for(const file of fi.files){const fd=new FormData();fd.append("file",file);fd.append("upload_preset","ibf_volunteers");fd.append("folder","ibf_attachments/"+cn.replace(/[^\w\u0600-\u06FF]/g,"_"));const r=await fetch("https://api.cloudinary.com/v1_1/dtcpmnjsf/auto/upload",{method:"POST",body:fd});const j=await r.json();if(j.secure_url)newAtts.push({id:uid(),name:file.name,url:j.secure_url,type:file.type||"",date:new Date().toISOString(),caravan:cn});}await C.proj().doc(pid).update({attachments:newAtts});await done(lang==="ar"?"تم الرفع":"Uploaded");}catch(e){setFlash("Error: "+e.message,"error");}btn.disabled=false;btn.textContent="⬆";fi.value="";});
+ document.querySelectorAll("[data-delattach]").forEach(b=>b.onclick=()=>{if(!confirm(lang==="ar"?"حذف المرفق؟":"Delete?"))return;const pid=b.dataset.delattach;const p=state.projects.find(x=>x.id===pid);if(!p)return;C.proj().doc(pid).update({attachments:(p.attachments||[]).filter(a=>a.id!==b.dataset.attid)}).then(async()=>done("")).catch(fail);});
+ document.querySelectorAll("[data-addproblem]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const pid=f.dataset.addproblem;const p=state.projects.find(x=>x.id===pid);if(!p)return;const txt=f.problem.value.trim();if(!txt)return;C.proj().doc(pid).update({problems:[...(p.problems||[]),{id:uid(),text:txt,date:f.pdate.value||new Date().toISOString().slice(0,10)}]}).then(async()=>done("")).catch(fail);});
+ document.querySelectorAll("[data-delproblem]").forEach(b=>b.onclick=()=>{const pid=b.dataset.delproblem;const p=state.projects.find(x=>x.id===pid);if(!p)return;C.proj().doc(pid).update({problems:(p.problems||[]).filter(pr=>pr.id!==b.dataset.prid)}).catch(fail);});
+ document.querySelectorAll("[data-delcvp]").forEach(b=>b.onclick=()=>{if(!confirm(lang==="ar"?"حذف القافلة؟":"Delete caravan?"))return;const pid=b.dataset.delcvp,cn=b.dataset.delcvn;const p=state.projects.find(x=>x.id===pid);if(!p)return;C.proj().doc(pid).update({caravans:(p.caravans||[]).filter(c=>c.name!==cn)}).then(async()=>done(lang==="ar"?"تم حذف القافلة":"Caravan deleted")).catch(fail);});
+ document.querySelectorAll("[data-delv]").forEach(b=>b.onclick=()=>{if(!confirm(t("delete")+"؟"))return;C.vol().doc(b.dataset.delv).delete().then(async()=>done("تم الحذف | Deleted")).catch(fail);});
+ document.querySelectorAll("[data-delp]").forEach(b=>b.onclick=()=>{if(!confirm(t("delete")+"؟"))return;delProject(b.dataset.delp).then(async()=>done("تم الحذف | Deleted")).catch(fail);});
+ const sa=$("#saveAccess");if(sa)sa.onclick=()=>{const ops=[];state.users.forEach((u,i)=>{const roleEl=document.querySelector('input[data-role="'+i+'"]');const role=roleEl?(roleEl.checked?"admin":"user"):u.role;let canDel=u.canDelete,assigned=[],assigned_clinics=[],screen_access=[];if(role==="admin"){canDel=true;assigned=[];assigned_clinics=[];screen_access=['dashboard','volunteers','projects','clinics','events','users','settings'];}else{const cdEl=document.querySelector('input[data-candel="'+i+'"]');canDel=cdEl?cdEl.checked:false;document.querySelectorAll('select[data-perm="'+i+'"]').forEach(sel=>{if(sel.value!=="none")assigned.push({id:sel.dataset.pid,perm:sel.value});});document.querySelectorAll('input[data-screen="'+i+'"]:checked').forEach(cb=>{if(!screen_access)screen_access=[];screen_access.push(cb.value);});
+     document.querySelectorAll('select[data-clinicrole="'+i+'"]').forEach(sel=>{if(sel.value!=='none')assigned_clinics.push({id:sel.dataset.cid,role:sel.value});});}ops.push(restUpdate('users',u.id,{role:role,canDelete:canDel,assigned:assigned,assigned_clinics:assigned_clinics,screen_access:screen_access||['dashboard']}));});Promise.all(ops).then(async()=>done(lang==="ar"?"تم حفظ الصلاحيات":"Permissions saved")).catch(fail);};
+ const auf=$("#addUserForm");if(auf)auf.onsubmit=e=>{e.preventDefault();const f=e.target;const email=f.email.value.trim();const role=f.role.value;const fv={full_name:f.full_name.value.trim(),phone:f.phone.value.trim(),national_id:f.national_id.value.trim(),age:toInt(f.age.value)};(async()=>{const cred=await secondaryAuth().createUserWithEmailAndPassword(email,f.password.value);const u=cred.user.uid;const code=await nextCode();await restSet("users",u,{username:email,email,role,assigned:[],canDelete:role==="admin",full_name:fv.full_name,phone:fv.phone,national_id:fv.national_id,age:fv.age,code});await restAdd('volunteers',{full_name:fv.full_name,code,phone:fv.phone||null,national_id:fv.national_id||null,commitment_score:null,project_id:null,caravan:null,_ts:null,age:fv.age,email,participations:[]});await secondaryAuth().signOut();await done((lang==="ar"?"تم إضافة المستخدم بكود: ":"User added with code: ")+code);})().catch(err=>{setFlash(authErr(err),"error");render();});};
+ const ef=$("#eventForm");if(ef)ef.onsubmit=e=>{e.preventDefault();const f=e.target;restAdd("events",{name:f.name.value.trim(),type:f.type.value,date:f.date.value||null,governorate:f.governorate.value||null,location:f.location.value.trim()||null,status:f.status.value||"planned",description:f.description.value.trim()||null,created:new Date().toISOString()}).then(async()=>done(lang==="ar"?"تم إنشاء الحدث":"Event created")).catch(fail);};
+ document.querySelectorAll(".evt-status").forEach(sel=>sel.onchange=()=>{restUpdate("events",sel.dataset.eid,{status:sel.value}).then(async()=>done("")).catch(fail);});
+ document.querySelectorAll("[data-delevt]").forEach(b=>b.onclick=()=>{if(!confirm(lang==="ar"?"حذف الحدث؟":"Delete event?"))return;restDel("events",b.dataset.delevt).then(async()=>done(lang==="ar"?"تم الحذف":"Deleted")).catch(fail);});
+ document.querySelectorAll("[data-resetpw]").forEach(b=>b.onclick=()=>{const email=b.dataset.resetpw;if(!email){setFlash(lang==="ar"?"لا يوجد بريد":"No email","error");render();return;}b.disabled=true;b.textContent="⏳...";auth.sendPasswordResetEmail(email).then(()=>{alert(lang==="ar"?"✅ تم إرسال رابط إعادة تعيين كلمة المرور إلى:\n"+email+"\n\nلو مش لاقيه — شوف مجلد Spam.":"✅ Password reset sent to:\n"+email+"\n\nCheck Spam folder if not found.");render();}).catch(e=>{alert("❌ "+e.message);render();});});
+ document.querySelectorAll("[data-saveprofile]").forEach(b=>b.onclick=()=>{const i=+b.dataset.saveprofile;const u=state.users[i];if(!u)return;const nameEl=document.querySelector('[data-editname="'+i+'"]');const phoneEl=document.querySelector('[data-editphone="'+i+'"]');const patch={};if(nameEl&&nameEl.value.trim()!==u.full_name)patch.full_name=nameEl.value.trim();if(phoneEl&&phoneEl.value.trim()!==(u.phone||""))patch.phone=phoneEl.value.trim();if(Object.keys(patch).length)restUpdate('users',u.id,patch).then(async()=>done(lang==="ar"?"تم تحديث البيانات":"Profile updated")).catch(fail);else setFlash(lang==="ar"?"لا يوجد تغييرات":"No changes","error");});
+ document.querySelectorAll("[data-deluser]").forEach(b=>b.onclick=()=>{const i=+b.dataset.deluser;const u=state.users[i];if(!u)return;if(u.id===state.session.uid){setFlash(lang==="ar"?"لا يمكنك حذف نفسك":"Cannot delete yourself","error");return;}if(!confirm((lang==="ar"?"حذف المستخدم ":"Delete user ")+(u.email||u.username)+"?"))return;C.usr().doc(u.id).delete().then(async()=>done(lang==="ar"?"تم حذف المستخدم":"User deleted")).catch(fail);});
+ const setF=$("#setForm");if(setF)setF.onsubmit=e=>{e.preventDefault();const f=e.target;restSet("config","settings",{formUrl:f.formUrl.value.trim(),gsUrl:f.gsUrl.value.trim(),gsToken:f.gsToken.value.trim(),autosync:f.autosync.checked}).then(async()=>done(t("settings_saved"))).catch(fail);};
+ const sn=$("#syncNow");if(sn)sn.onclick=()=>syncFromSheet(false);
+ const tu=$("#testUrl");if(tu)tu.onclick=()=>{if(!effGs()){setFlash(t("sync_off"),"error");render();return;}window.open(effGs()+(effGs().includes("?")?"&":"?")+"callback=test","_blank");};
+ const eax=$("#expAllXlsx");if(eax)eax.onclick=exportAllXlsx;
+ const bkj=$("#backupJson");if(bkj)bkj.onclick=backupJSON;
+ const rsb=$("#restoreBtn");if(rsb)rsb.onclick=()=>{const fi=document.getElementById("restoreFile");if(!fi||!fi.files||!fi.files[0]){setFlash(lang==="ar"?"اختر ملف .json أولًا":"Pick a .json file","error");return;}if(!confirm(t("restore_confirm")))return;restoreJSON(fi.files[0]);};
+ const crg=$("#crGenerate");if(crg)crg.onclick=()=>{const vols=visibleVolunteers();const projFilter=document.getElementById("crProject")?.value||"";const skillFilter=document.getElementById("crSkill")?.value||"";const fields=[...document.querySelectorAll("#crFields input:checked")].map(c=>c.value);if(!fields.length){setFlash(lang==="ar"?"اختر حقل واحد على الأقل":"Select at least one field","error");return;}let filtered=vols;if(projFilter)filtered=filtered.filter(v=>v.project_id===projFilter);if(skillFilter)filtered=filtered.filter(v=>(v.skills||[]).includes(skillFilter));const labels={full_name:t("name"),code:t("code"),phone:t("phone"),national_id:t("national_id"),email:"Email",commitment_score:t("commitment"),skills:t("skills"),id_photo:"Photo URL",caravan:t("caravan")};const hdr=fields.map(f=>labels[f]||f);const data=[hdr];filtered.forEach(v=>{const row=fields.map(f=>{if(f==="skills")return(v.skills||[]).join(", ");if(f==="commitment_score")return v.commitment_score??"";const pn=f==="project"?(state.projects.find(p=>p.id===v.project_id)||{}).name||"":"";return v[f]||"";});data.push(row);});const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Custom Report");XLSX.writeFile(wb,"custom_report_"+new Date().toISOString().slice(0,10)+".xlsx");setFlash((lang==="ar"?"تم تصدير ":"Exported ")+filtered.length+(lang==="ar"?" متطوع":" volunteers"));};
+ const sBtn=$("#syncBtn");if(sBtn)sBtn.onclick=()=>syncFromSheet(false);
+ document.querySelectorAll(".cv-qr").forEach(b=>b.onclick=()=>showQR(b.dataset.qrp,b.dataset.qrc));
+ document.querySelectorAll("[data-addcv]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const pid=f.dataset.addcv;const p=state.projects.find(x=>x.id===pid);if(!p)return;const nm=f.cname.value.trim();if(!nm)return;if((p.caravans||[]).some(c=>c.name===nm)){setFlash("القافلة موجودة | Caravan exists","error");return;}C.proj().doc(pid).update({caravans:[...(p.caravans||[]),{id:uid(),name:nm,date:f.cdate.value||null,location:f.cloc.value.trim()||null}]}).then(async()=>done("تمت إضافة القافلة | Caravan added")).catch(fail);});
+ const st=$("#selToggle");if(st)st.onclick=()=>{_selMode=!_selMode;render();};
+ const ds=$("#delSel");if(ds)ds.onclick=()=>{const ids=[...document.querySelectorAll(".selv:checked")].map(c=>c.value);if(!ids.length){setFlash(t("sel_none"),"error");return;}if(!confirm((lang==="ar"?"تأكيد حذف ":"Delete ")+ids.length+(lang==="ar"?" متطوع؟":" volunteers?")))return;Promise.all(ids.map(id=>restDel('volunteers',id))).then(async()=>{_selMode=false;await done((lang==="ar"?"تم حذف ":"Deleted ")+ids.length);}).catch(fail);};
+ const qd=$("#qrDownload");if(qd){qd.textContent=t("download");qd.onclick=downloadQR;}
+ const qc=$("#qrClose");if(qc){qc.textContent=t("close");qc.onclick=()=>{document.getElementById("qrOverlay").style.display="none";};}
+ const ex=$("#exportBtn");if(ex)ex.onclick=()=>{const data=[["الأسم رباعي","الكود","رقم التليفون","رقم البطاقة","درجة الالتزام","المشروع","الإيميل","صورة البطاقة","المهارات / Skills"]];visibleVolunteers().forEach(v=>{const pn=(state.projects.find(p=>p.id===v.project_id)||{}).name||"";data.push([v.full_name,v.code||"",v.phone||"",v.national_id||"",v._reg&&v._reg.volunteer_type||"",v._reg&&v._reg.governorate||"",pn,v.email||"",v.id_photo||"",v.convoy_role||""]);});const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Volunteers");XLSX.writeFile(wb,"volunteers_export.xlsx");};
+ const ib=$("#importBtn");if(ib)ib.onclick=()=>{const fi=$("#importFile");if(!fi.files.length){setFlash("اختر ملف Excel أولًا","error");render();return;}const reader=new FileReader();reader.onload=ev=>{(async()=>{const wb=XLSX.read(ev.target.result,{type:"array"});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false});const parsed=parseVolunteerSheet(rows);let added=0,skipped=0;for(const p of parsed){const dupCode=p.code&&state.volunteers.some(v=>v.code===p.code);const dupId=!p.code&&p.national_id&&state.volunteers.some(v=>v.national_id===p.national_id);if(dupCode||dupId){skipped++;continue;}const code=p.code||await nextCode();await restAdd('volunteers',{full_name:p.full_name,code,phone:p.phone||null,national_id:p.national_id||null,commitment_score:p.commitment_score,project_id:null,caravan:null,_ts:null,participations:[]});added++;}await done(`تمت إضافة ${added} متطوع${skipped?` (تجاهل ${skipped} مكرر)`:""}`);})().catch(err=>{setFlash("Import failed: "+err.message,"error");render();});};reader.readAsArrayBuffer(fi.files[0]);fi.value="";};
+ const sb=$("#volSearch");if(sb){const cnt=$("#volCount");const apply=()=>{const q=sb.value.trim().toLowerCase();let shown=0;document.querySelectorAll('tr[data-s]').forEach(r=>{const ok=!q||r.getAttribute("data-s").includes(q);r.style.display=ok?"":"none";if(ok)shown++;});if(cnt)cnt.textContent=shown+(lang==="ar"?" نتيجة":" results");};sb.oninput=apply;apply();}
+}
+
+let _registering=false;
+(function(){
+ const qp=new URLSearchParams(location.search);
+ if(qp.get("register")==="1"){renderRegister(qp);return;}
+ auth.onAuthStateChanged(async user=>{
+  if(_registering)return;
+  if(user){
+    document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><div class="muted">⏳ جارٍ تحميل الملف الشخصي...</div><p style="font-size:.7rem;color:var(--muted);margin-top:10px;direction:ltr">UID: '+user.uid+'</p></div></div>';
+    try{
+     const token=await _tok();
+     const resp=await fetch(FS_BASE+'/users/'+user.uid,{headers:{'Authorization':'Bearer '+token}});
+     const body=await resp.text();
+     if(!resp.ok){
+      if(resp.status===429){
+        document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><h1 style="font-size:1.1rem">⏳</h1><p style="color:var(--muted);margin:12px 0">طلبات كتير — جارٍ إعادة المحاولة...<br>Too many requests — retrying...</p></div></div>';
+        await new Promise(r=>setTimeout(r,10000));location.reload();return;
+      }
+      if(resp.status===404){
+        const isFirstAdmin=user.uid==="atnqHwuNP8TVcV6JdpcnlIGmr8l2";
+        await restSet("users",user.uid,{username:user.email,email:user.email,role:isFirstAdmin?"admin":"user",assigned:[],assigned_clinics:[],screen_access:isFirstAdmin?["dashboard","volunteers","projects","clinics","events","users","settings"]:["dashboard"],canDelete:isFirstAdmin,full_name:user.displayName||user.email,phone:"",code:""});
+        location.reload();return;
+      }
+      await auth.signOut();setFlash("Firestore رفض القراءة (HTTP "+resp.status+")","error");try{render();}catch(re){}return;}
+     const prof=_docParse(JSON.parse(body));
+     if(!prof){await auth.signOut();setFlash("لا يوجد ملف لهذا الحساب.","error");try{render();}catch(re){}return;}
+     state.session={uid:user.uid,email:user.email,username:prof.username||user.email,role:prof.role||"user"};
+     state.view=isAdmin()?"dashboard":"profile";
+    }catch(e){await auth.signOut();setFlash("خطأ في قراءة الملف: "+e.message,"error");try{render();}catch(re){}return;}
+    // render + listeners OUTSIDE try-catch so errors don't trigger signOut
+    try{startListeners();}catch(e){console.warn("Listener error:",e);}
+    try{render();}catch(e){console.warn("Render error:",e);}
+  }else{state.session=null;stopListeners();if(_syncTimer){clearInterval(_syncTimer);_syncTimer=null;}state.authView="login";try{render();}catch(e){}}
+ });
+}());
+window._applyDf=function(){window._df.project=document.getElementById("dfProject")?.value||"";window._df.gov=document.getElementById("dfGov")?.value||"";window._df.skill=document.getElementById("dfSkill")?.value||"";window._df.gender=document.getElementById("dfGender")?.value||"";render();};
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{fetch("sw.js",{method:"HEAD"}).then(r=>{if(r.ok)navigator.serviceWorker.register("sw.js");}).catch(()=>{});});}
+</script>
+</body>
+</html>

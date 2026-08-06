@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>استمارة تسجيل المتطوعين / Volunteer Registration — IBF</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#1B4F8A;--pl:#EAF1FB;--pd:#0D3362;
+  --acc:#C0392B;--g:#1A7F5A;--gl:#E6F5EE;
+  --txt:#1A1A2E;--muted:#6B7280;--bdr:#D1D5DB;
+  --bg:#F0F4F8;--w:#fff;--r:12px;
+  --sh:0 2px 16px rgba(27,79,138,.10)
+}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+.hdr{background:linear-gradient(135deg,#0099BB,#00AECF 60%,#00C4E8);color:#fff;text-align:center;padding:2.5rem 1rem 2rem;position:relative;overflow:hidden}
+.hdr .logo-bg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;opacity:.15;border-radius:50%;object-fit:cover;pointer-events:none;z-index:0}
+.hdr-circle{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.08);pointer-events:none}
+.hdr .c1{width:300px;height:300px;top:-80px;right:-60px;background:radial-gradient(circle,rgba(255,255,255,.06) 0%,transparent 70%)}
+.hdr .c2{width:200px;height:200px;bottom:-60px;left:-40px;background:radial-gradient(circle,rgba(255,255,255,.05) 0%,transparent 70%)}
+.hdr .c3{width:120px;height:120px;top:10px;left:20%;background:radial-gradient(circle,rgba(255,255,255,.04) 0%,transparent 70%)}
+.hdr .badge{position:relative;z-index:1}
+.hdr::before,.hdr::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.05)}
+.hdr::before{width:220px;height:220px;top:-60px;right:-60px}
+.hdr::after{width:200px;height:200px;bottom:-80px;left:-40px}
+.logo{width:70px;height:70px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .85rem;font-size:32px;border:2px solid rgba(255,255,255,.3)}
+.hdr h1{font-size:24px;font-weight:800;margin-bottom:4px}
+.hdr .sub{font-size:13px;opacity:.75}
+.badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:12px;padding:4px 16px;border-radius:20px;margin-top:12px}
+.prog{background:var(--w);border-bottom:1px solid var(--bdr);padding:.85rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.prog-lbl{font-size:13px;color:var(--muted);white-space:nowrap;font-weight:500}
+.prog-track{flex:1;height:7px;background:#E5E7EB;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#1B4F8A,#2E86DE);border-radius:4px;transition:width .4s ease;width:0}
+.prog-pct{font-size:13px;font-weight:700;color:var(--p);min-width:38px;text-align:left;direction:ltr}
+.wrap{max-width:740px;margin:0 auto;padding:1.75rem 1rem 3rem}
+.card{background:var(--w);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);padding:1.75rem;margin-bottom:1.25rem}
+.card-hdr{display:flex;align-items:center;gap:12px;margin-bottom:1.4rem;padding-bottom:.85rem;border-bottom:2px solid var(--pl)}
+.ico{width:40px;height:40px;background:var(--pl);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.card-hdr h2{font-size:16px;font-weight:700;color:var(--p)}
+.card-hdr p{font-size:12px;color:var(--muted);margin-top:1px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.g2{grid-template-columns:1fr}}
+.f{margin-bottom:1.1rem}
+.f:last-child{margin-bottom:0}
+.f label{display:block;font-size:14px;font-weight:600;color:var(--txt);margin-bottom:7px}
+.f label .en{display:block;font-size:11px;font-weight:400;color:var(--muted);direction:ltr;text-align:right;margin-top:1px}
+.req{color:var(--acc);margin-right:3px}
+.f input,.f select,.f textarea{width:100%;padding:11px 14px;border:1.5px solid var(--bdr);border-radius:9px;font-size:14px;font-family:'Cairo',sans-serif;color:var(--txt);background:var(--w);transition:border-color .2s,box-shadow .2s;appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(27,79,138,.12)}
+.f input.err,.f select.err,.f textarea.err{border-color:var(--acc);box-shadow:0 0 0 3px rgba(192,57,43,.10)}
+.f textarea{min-height:110px;resize:vertical;line-height:1.7}
+.sw{position:relative}
+.sw::after{content:'\25BE';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:14px}
+.f select{padding-left:36px;cursor:pointer}
+.rg{display:flex;flex-direction:column;gap:9px}
+.ri{display:flex;align-items:center;gap:11px;padding:12px 15px;border:1.5px solid var(--bdr);border-radius:9px;cursor:pointer;transition:all .15s;background:var(--w)}
+.ri:hover,.ri.sel{border-color:var(--p);background:var(--pl)}
+.ri input[type=radio]{accent-color:var(--p);width:17px;height:17px;flex-shrink:0;cursor:pointer}
+.ri label{font-size:14px;cursor:pointer;font-weight:500}
+.ri label .sub{font-size:11px;color:var(--muted);font-weight:400;display:block}
+.mbox{background:var(--gl);border:1.5px solid #A8D5BE;border-radius:9px;padding:1.1rem 1.25rem;margin-top:.85rem;display:none;animation:fi .25s ease}
+.mbox.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.mbox-ttl{font-size:14px;font-weight:700;color:var(--g);margin-bottom:12px}
+.spg{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:400px){.spg{grid-template-columns:1fr}}
+.sp{display:flex;align-items:center;gap:9px;padding:11px 13px;border:1.5px solid #A8D5BE;border-radius:8px;cursor:pointer;background:var(--w);transition:all .15s}
+.sp:hover,.sp.sel{border-color:var(--g);background:#D4EDDF}
+.sp input[type=radio]{accent-color:var(--g);width:16px;height:16px;flex-shrink:0}
+.sp label{font-size:13px;font-weight:600;cursor:pointer}
+.farea{border:2px dashed var(--bdr);border-radius:9px;padding:1.4rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.farea:hover{border-color:var(--p);background:var(--pl)}
+.farea .fi{font-size:30px;margin-bottom:7px}
+.farea p{font-size:13px;color:var(--muted)}
+.farea .fn{font-size:13px;color:var(--p);font-weight:600;margin-top:7px;word-break:break-all}
+.farea input{display:none}
+.ff{display:flex;justify-content:flex-end;margin-top:5px}
+.cc{font-size:12px;color:var(--muted)}
+.sub-sec{text-align:center;margin-top:1.5rem}
+.sbtn{background:var(--p);color:#fff;border:none;border-radius:11px;padding:15px 2.5rem;font-size:16px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;transition:background .2s,transform .1s,box-shadow .2s;box-shadow:0 4px 16px rgba(27,79,138,.28)}
+.sbtn:hover{background:var(--pd);box-shadow:0 6px 20px rgba(27,79,138,.38)}
+.sbtn:active{transform:scale(.98)}
+.sbtn:disabled{background:#9CA3AF;cursor:not-allowed;box-shadow:none}
+.sub-note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.7}
+.lov{display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.lov.on{display:flex}
+.spin{width:48px;height:48px;border:4px solid var(--pl);border-top-color:var(--p);border-radius:50%;animation:sp .85s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ltxt{font-size:16px;font-weight:600;color:var(--p)}
+.suc{display:none;text-align:center;padding:3.5rem 2rem;background:var(--w);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);margin-top:2rem}
+.sico{width:80px;height:80px;background:var(--gl);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 1.2rem;border:2px solid #A8D5BE}
+.suc h2{font-size:24px;font-weight:800;color:var(--g);margin-bottom:10px}
+.suc p{font-size:14px;color:var(--muted);line-height:2}
+.em{font-size:12px;color:var(--acc);margin-top:5px;display:none}
+.em.on{display:block}
+.rnote{font-size:12px;color:var(--muted);margin-bottom:1.1rem}
+.rnote span{color:var(--acc)}
+[data-theme="dark"]{--p:#4D9FEC;--pl:#1a2d45;--pd:#7BB8F5;--acc:#E05A4E;--g:#2ECC8A;--gl:#0d2b1f;--txt:#E8EAF0;--muted:#9BA3AF;--bdr:#2D3748;--bg:#0F1117;--w:#1A1D27;--sh:0 2px 16px rgba(0,0,0,.4)}
+[data-theme="dark"] .hdr{background:linear-gradient(135deg,#0a1628,#0d2140 60%,#112952)}
+[data-theme="dark"] .prog{background:#1A1D27;border-color:#2D3748}
+[data-theme="dark"] .card{background:#1A1D27;border-color:#2D3748}
+[data-theme="dark"] .ri{background:#1A1D27;border-color:#2D3748}
+[data-theme="dark"] .ri:hover,[data-theme="dark"] .ri.sel{background:#1a2d45;border-color:#4D9FEC}
+[data-theme="dark"] .sp{background:#1A1D27;border-color:#1a3a2a}
+[data-theme="dark"] .sp:hover,[data-theme="dark"] .sp.sel{background:#0d2b1f;border-color:#2ECC8A}
+[data-theme="dark"] .mbox{background:#0d2b1f;border-color:#1a3a2a}
+[data-theme="dark"] .farea{background:#13161f;border-color:#2D3748}
+[data-theme="dark"] .farea:hover{background:#1a2d45;border-color:#4D9FEC}
+[data-theme="dark"] .f input,[data-theme="dark"] .f select,[data-theme="dark"] .f textarea{background:#13161f;border-color:#2D3748;color:#E8EAF0}
+[data-theme="dark"] .f input:focus,[data-theme="dark"] .f select,[data-theme="dark"] .f textarea:focus{border-color:#4D9FEC}
+[data-theme="dark"] .suc{background:#1A1D27;border-color:#2D3748}
+[data-theme="dark"] .sico{background:#0d2b1f;border-color:#1a3a2a}
+[data-theme="dark"] .card-hdr{border-color:#1a2d45}
+[data-theme="dark"] .ico{background:#1a2d45}
+[data-theme="dark"] .sw::after{color:#9BA3AF}
+[data-theme="dark"] option{background:#1A1D27;color:#E8EAF0}
+.theme-toggle{position:fixed;bottom:24px;left:24px;z-index:50;width:48px;height:48px;border-radius:50%;border:none;background:#1B4F8A;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:all .3s ease;display:flex;align-items:center;justify-content:center}
+.theme-toggle:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+[data-theme="dark"] .theme-toggle{background:#4D9FEC}
+</style>
+</head>
+<body>
+
+<div class="lov" id="lov"><div class="spin"></div><div class="ltxt">جاري إرسال بياناتك... / Submitting...</div></div>
+
+<div class="hdr">
+  <img class="logo-bg" src="icon-192.png" alt="" onerror="this.style.display='none'">
+  <div class="hdr-circle c1"></div><div class="hdr-circle c2"></div><div class="hdr-circle c3"></div>
+  <div class="badge">استمارة تسجيل المتطوعين الجدد / New Volunteer Registration</div>
+</div>
+
+<div class="prog">
+  <span class="prog-lbl">اكتمال الاستمارة / Completion</span>
+  <div class="prog-track"><div class="prog-fill" id="pf"></div></div>
+  <span class="prog-pct" id="pp">0%</span>
+</div>
+
+<div class="wrap" id="mainWrap">
+  <p class="rnote">الحقول المشار إليها بـ <span>*</span> إلزامية / Fields marked <span>*</span> are required</p>
+
+  <!-- 1. Personal -->
+  <div class="card">
+    <div class="card-hdr"><div class="ico">👤</div><div><h2>البيانات الشخصية / Personal Info</h2></div></div>
+    <div class="f">
+      <label>الاسم رباعي / Full Name (4 parts) <span class="req">*</span></label>
+      <input type="text" id="fullName" placeholder="الاسم الأول / الثاني / الثالث / الرابع" oninput="up()"/>
+      <div class="em" id="e-fullName">الاسم يجب أن يكون رباعياً / Name must be 4 parts</div>
+    </div>
+    <div class="g2">
+      <div class="f">
+        <label>النوع / Gender <span class="req">*</span></label>
+        <div class="sw"><select id="gender" onchange="up()"><option value="">اختر</option><option value="ذكر">ذكر / Male</option><option value="أنثى">أنثى / Female</option></select></div>
+      </div>
+      <div class="f">
+        <label>السن / Age <span class="req">*</span></label>
+        <input type="number" id="age" min="16" max="70" placeholder="مثال: 22" oninput="up()"/>
+      </div>
+    </div>
+    <div class="f">
+      <label>المحافظة / Governorate <span class="req">*</span></label>
+      <div class="sw"><select id="gov" onchange="up()">
+        <option value="">اختر المحافظة</option>
+        <option>القاهرة</option><option>الجيزة</option><option>الإسكندرية</option><option>الدقهلية</option>
+        <option>البحر الأحمر</option><option>البحيرة</option><option>الفيوم</option><option>الغربية</option>
+        <option>الإسماعيلية</option><option>المنوفية</option><option>المنيا</option><option>القليوبية</option>
+        <option>الوادي الجديد</option><option>الشرقية</option><option>جنوب سيناء</option><option>كفر الشيخ</option>
+        <option>مطروح</option><option>الأقصر</option><option>أسوان</option><option>أسيوط</option>
+        <option>بني سويف</option><option>بورسعيد</option><option>دمياط</option><option>سوهاج</option>
+        <option>قنا</option><option>شمال سيناء</option><option>السويس</option>
+      </select></div>
+    </div>
+  </div>
+
+  <!-- 2. ID & Contact -->
+  <div class="card">
+    <div class="card-hdr"><div class="ico">🪪</div><div><h2>الهوية والتواصل / ID & Contact</h2></div></div>
+    <div class="f">
+      <label>الرقم القومي / National ID <span class="req">*</span></label>
+      <input type="text" id="nationalId" maxlength="14" placeholder="14 رقم" dir="ltr" style="text-align:right" oninput="up()"/>
+      <div class="em" id="e-nationalId">الرقم القومي 14 رقم / ID must be 14 digits</div>
+    </div>
+    <div class="f">
+      <label>صورة البطاقة / ID Photo (Front & Back) <span class="req">*</span></label>
+      <div class="farea" id="farea" onclick="document.getElementById('idPhoto').click()">
+        <div class="fi">📎</div>
+        <p>اضغط لرفع الصورة / Click to upload</p>
+        <p style="font-size:11px;margin-top:3px;color:#9CA3AF">JPG, PNG • يمكن اختيار أكثر من صورة</p>
+        <div class="fn" id="fn"></div>
+        <input type="file" id="idPhoto" accept="image/*" multiple onchange="handleFile(this)"/>
+      </div>
+      <div class="em" id="e-file">يرجى رفع صورة البطاقة / Please upload ID photo</div>
+    </div>
+    <div class="g2">
+      <div class="f">
+        <label>رقم الواتساب / WhatsApp <span class="req">*</span></label>
+        <input type="tel" id="whatsapp" placeholder="01XXXXXXXXX" dir="ltr" style="text-align:right" oninput="up()"/>
+        <div class="em" id="e-whatsapp">رقم واتساب غير صحيح / Invalid WhatsApp</div>
+      </div>
+      <div class="f">
+        <label>البريد الإلكتروني / Email (اختياري / Optional)</label>
+        <input type="email" id="email" placeholder="example@mail.com" dir="ltr" style="text-align:right"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Education -->
+  <div class="card">
+    <div class="card-hdr"><div class="ico">🎓</div><div><h2>المؤهل الدراسي / Education</h2></div></div>
+    <div class="f">
+      <label>المؤهل الدراسي / Education <span class="req">*</span></label>
+      <div class="sw"><select id="edu" onchange="up()">
+        <option value="">اختر</option>
+        <option>أقل من الثانوية</option><option>ثانوية عامة / أزهرية</option>
+        <option>دبلوم</option><option>بكالوريوس</option><option>ماجستير</option><option>دكتوراه</option>
+      </select></div>
+    </div>
+  </div>
+
+  <!-- 4. Volunteer Type -->
+  <div class="card">
+    <div class="card-hdr"><div class="ico">🏥</div><div><h2>نوع التطوع / Volunteer Type</h2></div></div>
+    <div class="f">
+      <label>متطوع طبي أم غير طبي؟ / Medical or Non-Medical? <span class="req">*</span></label>
+      <div class="rg">
+        <div class="ri" id="ri-med" onclick="selR('volType','medical','ri-med');toggleMed(true)">
+          <input type="radio" name="volType" value="طبي" onchange="up()"/>
+          <label>متطوع طبي / Medical<span class="sub">طالب أو خريج طبي / Medical student or graduate</span></label>
+        </div>
+        <div class="ri" id="ri-non" onclick="selR('volType','non-medical','ri-non');toggleMed(false)">
+          <input type="radio" name="volType" value="غير طبي" onchange="up()"/>
+          <label>غير طبي / Non-Medical<span class="sub">إداري، تقني، اجتماعي / Admin, Tech, Social</span></label>
+        </div>
+      </div>
+      <div class="mbox" id="mbox">
+        <div class="mbox-ttl">🩺 التخصص الطبي <span class="req">*</span></div>
+        <div class="spg">
+          <div class="sp" id="sp-med" onclick="selSp('كلية الطب','sp-med')"><input type="radio" name="spec" value="كلية الطب" onchange="up()"/><label>كلية الطب<br><span style="font-size:11px;color:var(--muted)">Medicine</span></label></div>
+          <div class="sp" id="sp-ph"  onclick="selSp('كلية الصيدلة','sp-ph')"><input type="radio" name="spec" value="كلية الصيدلة" onchange="up()"/><label>كلية الصيدلة<br><span style="font-size:11px;color:var(--muted)">Pharmacy</span></label></div>
+          <div class="sp" id="sp-dn"  onclick="selSp('طب الأسنان','sp-dn')"><input type="radio" name="spec" value="طب الأسنان" onchange="up()"/><label>طب الأسنان<br><span style="font-size:11px;color:var(--muted)">Dentistry</span></label></div>
+          <div class="sp" id="sp-nu"  onclick="selSp('التمريض','sp-nu')"><input type="radio" name="spec" value="التمريض" onchange="up()"/><label>التمريض<br><span style="font-size:11px;color:var(--muted)">Nursing</span></label></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Experience -->
+  <div class="card">
+    <div class="card-hdr"><div class="ico">💬</div><div><h2>الخبرة والدوافع / Experience</h2></div></div>
+    <div class="f">
+      <label>هل سبق لك التطوع؟ / Volunteered Before? <span class="req">*</span></label>
+      <div class="rg">
+        <div class="ri" id="ri-yes" onclick="selR('prevVol','yes','ri-yes')"><input type="radio" name="prevVol" value="نعم" onchange="up()"/><label>نعم / Yes</label></div>
+        <div class="ri" id="ri-no"  onclick="selR('prevVol','no','ri-no')"><input type="radio" name="prevVol" value="لا" onchange="up()"/><label>لا / No</label></div>
+      </div>
+    </div>
+    <div class="f">
+      <label>كيف عرفت بالمؤسسة؟ / How did you hear about us? <span class="req">*</span></label>
+      <div class="sw">
+        <select id="hearAbout" onchange="up();toggleOther(this.value==='أخرى')">
+          <option value="">اختر / Select</option>
+          <option value="صديق / معارف">صديق / معارف</option>
+          <option value="سوشيال ميديا">سوشيال ميديا</option>
+          <option value="إعلان">إعلان</option>
+          <option value="موقع إلكتروني">موقع إلكتروني</option>
+          <option value="مسؤول المتطوعين">مسؤول المتطوعين</option>
+          <option value="أخرى">أخرى</option>
+        </select>
+      </div>
+      <div id="otherBox" style="display:none;margin-top:10px">
+        <input type="text" id="hearOther" placeholder="اذكر كيف عرفت بالمؤسسة..." oninput="up()"/>
+      </div>
+      <div class="em" id="e-hear">يرجى الاختيار / Please select</div>
+    </div>
+  </div>
+
+  <!-- 6. Motivation -->
+  <div class="card">
+    <div class="card-hdr"><div class="ico">💡</div><div><h2>دوافع التطوع / Motivation</h2></div></div>
+    <div class="f">
+      <label>لماذا تريد التطوع؟ / Why volunteer? (اختياري / Optional)</label>
+      <textarea id="motivation" maxlength="600" placeholder="اكتب إجابتك هنا... (اختياري)" oninput="cc();up()"></textarea>
+      <div class="ff"><span class="cc" id="cc">0 / 600</span></div>
+    </div>
+  </div>
+
+  <div class="sub-sec">
+    <button class="sbtn" id="sbtn" onclick="submit()">إرسال الاستمارة / Submit</button>
+    <p class="sub-note">بالضغط على إرسال، أنت توافق على استخدام بياناتك لأغراض التطوع فقط.
+By submitting, you agree to use your data for volunteering purposes only.</p>
+  </div>
+</div>
+
+<!-- Success -->
+<div class="wrap" id="sucWrap" style="display:none">
+  <div class="suc" id="sucScreen">
+    <div class="sico">✅</div>
+    <h2>تم تسجيل بياناتك بنجاح! / Registration Successful!</h2>
+    <p id="sucMsg">شكراً لتطوعك مع مؤسسة إبراهيم بدران 🤝<br>Thank you for joining Ibrahim Badran Foundation<br><br>سيتم مراجعة استمارتك والتواصل معك قريباً عبر الواتساب.<br>Your form will be reviewed and we'll contact you via WhatsApp soon.</p>
+  </div>
+</div>
+
+<!-- Duplicate Screen -->
+<div class="wrap" id="dupWrap" style="display:none">
+  <div class="suc" id="dupScreen" style="display:block">
+    <div class="sico" style="background:#FEE2E2;border-color:#FCA5A5;font-size:38px">🚫</div>
+    <h2 style="color:var(--acc)">تم التسجيل مسبقاً! / Already Registered!</h2>
+    <p>هذا الرقم القومي مسجل في قاعدة بياناتنا من قبل.<br>This National ID is already registered.<br><br>لو في مشكلة تواصل معنا مباشرة عبر الواتساب.</p>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  Google Apps Script (backup — saves to Sheet)
+// ══════════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3Tu2mPdHbTb7nztOGCPxrwdUG-WENDtw0ilaiqP5F8iaOZ0SJXYA38fa5sIRMrlrm/exec";
+
+// ══════════════════════════════════════════════
+//  Firestore REST API (primary — saves to DB)
+// ══════════════════════════════════════════════
+const FS_PROJECT = 'ibf-volunteer';
+const FS_BASE = 'https://firestore.googleapis.com/v1/projects/' + FS_PROJECT + '/databases/(default)/documents';
+const FS_KEY  = 'AIzaSyAaFSXhHkkDrNHw_JtIM0e3tdOYY5LLtZc';
+
+function _toFV(v){
+ if(v===null||v===undefined)return{nullValue:null};
+ if(typeof v==='boolean')return{booleanValue:v};
+ if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};
+ if(typeof v==='string')return{stringValue:v};
+ if(Array.isArray(v))return{arrayValue:{values:v.map(_toFV)}};
+ if(typeof v==='object'){const f={};for(const k in v)if(v.hasOwnProperty(k))f[k]=_toFV(v[k]);return{mapValue:{fields:f}};}
+ return{stringValue:String(v)};
+}
+function _objFields(o){const f={};for(const k in o)if(k!=='id')f[k]=_toFV(o[k]);return f;}
+
+async function fsNextCode(){
+ let cur=0;
+ try{
+  const r=await fetch(FS_BASE+'/counters/volunteers?key='+FS_KEY);
+  if(r.ok){const d=await r.json();if(d.fields&&d.fields.n)cur=Number(d.fields.n.integerValue||0);}
+ }catch(e){console.warn('Counter read:',e);}
+ cur++;
+ try{
+  await fetch(FS_BASE+'/counters/volunteers?key='+FS_KEY,{
+   method:'PATCH',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({fields:{n:{integerValue:String(cur)}}})
+  });
+ }catch(e){console.warn('Counter write:',e);}
+ return "V"+String(cur).padStart(4,"0");
+}
+
+async function fsAddVolunteer(data){
+ const r=await fetch(FS_BASE+'/volunteers?key='+FS_KEY,{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({fields:_objFields(data)})
+ });
+ if(!r.ok){const t=await r.text();throw new Error('Firestore '+r.status+': '+t.slice(0,200));}
+ return await r.json();
+}
+
+// ══════════════════════════════════════════════
+
+function toggleOther(show){
+  document.getElementById('otherBox').style.display = show ? 'block' : 'none';
+  if(!show) document.getElementById('hearOther').value = '';
+}
+
+function selR(name,val,id){
+  document.querySelectorAll('input[name='+name+']').forEach(r=>{
+    r.checked=(r.value===val||r.closest('.ri')?.id===id&&r.value);
+    r.closest('.ri')?.classList.remove('sel');
+  });
+  document.getElementById(id).classList.add('sel');
+  const radio=document.querySelector('#'+id+' input[type=radio]');
+  if(radio)radio.checked=true;
+  up();
+}
+
+function selSp(val,id){
+  document.querySelectorAll('input[name=spec]').forEach(r=>r.checked=(r.value===val));
+  document.querySelectorAll('[id^=sp-]').forEach(e=>e.classList.remove('sel'));
+  document.getElementById(id).classList.add('sel');
+  up();
+}
+
+function toggleMed(show){
+  const b=document.getElementById('mbox');
+  b.className='mbox'+(show?' on':'');
+  if(!show){
+    document.querySelectorAll('input[name=spec]').forEach(r=>r.checked=false);
+    document.querySelectorAll('[id^=sp-]').forEach(e=>e.classList.remove('sel'));
+  }
+}
+
+/* ★ FIX: store actual files for Cloudinary upload */
+function handleFile(inp){
+  const files = Array.from(inp.files);
+  document.getElementById('fn').textContent = files.map(f=>f.name).join('، ');
+  window._photoFiles = files.map(f => ({name: f.name, data: f}));
+  document.getElementById('farea').style.borderColor='';
+  document.getElementById('e-file').classList.remove('on');
+  up();
+}
+
+function cc(){
+  const v=document.getElementById('motivation').value.length;
+  document.getElementById('cc').textContent=v+' / 600';
+}
+
+function up(){
+  const fields=[
+    document.getElementById('fullName').value.trim(),
+    document.getElementById('gender').value,
+    document.getElementById('age').value,
+    document.getElementById('gov').value,
+    document.getElementById('nationalId').value.trim(),
+    document.getElementById('idPhoto').files.length>0?'ok':'',
+    document.getElementById('whatsapp').value.trim(),
+    document.getElementById('edu').value,
+    document.querySelector('input[name=volType]:checked')?'ok':'',
+    document.querySelector('input[name=prevVol]:checked')?'ok':'',
+    document.getElementById('motivation').value.trim(),
+    document.getElementById('hearAbout')?.value || ''
+  ];
+  const pct=Math.round(fields.filter(v=>v!=='').length/fields.length*100);
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('pp').textContent=pct+'%';
+}
+
+async function submit(){
+  let ok=true;
+
+  const fn=document.getElementById('fullName').value.trim();
+  const okN=fn.split(/\s+/).length>=4;
+  document.getElementById('fullName').classList.toggle('err',!okN);
+  document.getElementById('e-fullName').classList.toggle('on',!okN);
+  if(!okN)ok=false;
+
+  const gv=document.getElementById('gender').value;
+  document.getElementById('gender').classList.toggle('err',!gv);
+  if(!gv)ok=false;
+
+  const ag=document.getElementById('age').value;
+  const okA=ag!==''&&+ag>=16&&+ag<=70;
+  document.getElementById('age').classList.toggle('err',!okA);
+  if(!okA)ok=false;
+
+  const gov=document.getElementById('gov').value;
+  document.getElementById('gov').classList.toggle('err',!gov);
+  if(!gov)ok=false;
+
+  const nid=document.getElementById('nationalId').value.trim();
+  const okI=/^\d{14}$/.test(nid);
+  document.getElementById('nationalId').classList.toggle('err',!okI);
+  document.getElementById('e-nationalId').classList.toggle('on',!okI);
+  if(!okI)ok=false;
+
+  const wa=document.getElementById('whatsapp').value.trim().replace(/\s+/g,'');
+  const okW=/^01[0-9]{9}$/.test(wa);
+  document.getElementById('whatsapp').classList.toggle('err',!okW);
+  document.getElementById('e-whatsapp').classList.toggle('on',!okW);
+  if(!okW)ok=false;
+
+  const edu=document.getElementById('edu').value;
+  document.getElementById('edu').classList.toggle('err',!edu);
+  if(!edu)ok=false;
+
+  const hearVal = document.getElementById('hearAbout').value;
+  document.getElementById('hearAbout').classList.toggle('err', !hearVal);
+  document.getElementById('e-hear').classList.toggle('on', !hearVal);
+  if(!hearVal) ok=false;
+
+  if(!document.querySelector('input[name=volType]:checked'))ok=false;
+  if(!document.querySelector('input[name=prevVol]:checked'))ok=false;
+
+  const isMed=document.querySelector('input[name=volType]:checked')?.value==='طبي';
+  if(isMed&&!document.querySelector('input[name=spec]:checked')){
+    alert('اختر التخصص الطبي / Select medical specialty.');return;
+  }
+
+  if(!window._photoFiles || window._photoFiles.length===0){
+    ok=false;
+    document.getElementById('farea').style.borderColor='var(--acc)';
+    document.getElementById('e-file').classList.add('on');
+  }
+
+  if(!ok){alert('⚠️ أكمل الحقول الإلزامية / Please complete all required fields.');return;}
+
+  const mot=document.getElementById('motivation').value.trim();
+  const emailVal=document.getElementById('email').value.trim()||'';
+  const hearFull=(()=>{
+    const v=document.getElementById('hearAbout').value;
+    return v==='أخرى'?('أخرى: '+(document.getElementById('hearOther').value.trim()||'—')):(v||'—');
+  })();
+
+  document.getElementById('lov').classList.add('on');
+  document.getElementById('sbtn').disabled=true;
+
+  try{
+    // ── Step 1: Duplicate check via JSONP (against Google Sheet) ──
+    document.querySelector('.ltxt').textContent='جاري التحقق... / Verifying...';
+    const isDuplicate = await new Promise((resolve)=>{
+      const callbackName='cb_'+Date.now();
+      const script=document.createElement('script');
+      window[callbackName]=(data)=>{resolve(data.status==='duplicate');delete window[callbackName];script.remove();};
+      script.src=SCRIPT_URL+'?check='+encodeURIComponent(nid)+'&callback='+callbackName;
+      script.onerror=()=>{resolve(false);script.remove();};
+      document.head.appendChild(script);
+      setTimeout(()=>resolve(false),5000);
+    });
+
+    if(isDuplicate){
+      document.getElementById('lov').classList.remove('on');
+      document.getElementById('sbtn').disabled=false;
+      showDuplicate();return;
+    }
+
+    // ── Step 2: Upload photos to Cloudinary ──
+    document.querySelector('.ltxt').textContent='جاري رفع الصور... / Uploading photos...';
+    const photoLinks=[];
+    if(window._photoFiles && window._photoFiles.length>0){
+      for(const photo of window._photoFiles){
+        try{
+          const formData=new FormData();
+          formData.append('file',photo.data);
+          formData.append('upload_preset','ibf_volunteers');
+          formData.append('folder','ibrahim_badran_volunteers');
+          formData.append('public_id',nid+'_'+(photoLinks.length+1));
+          const cloudRes=await fetch('https://api.cloudinary.com/v1_1/dtcpmnjsf/image/upload',{method:'POST',body:formData});
+          const cloudJson=await cloudRes.json();
+          if(cloudJson.secure_url) photoLinks.push(cloudJson.secure_url);
+        }catch(ce){console.warn('Cloudinary error:',ce);}
+      }
+    }
+    const photoStr=photoLinks.length>0?photoLinks.join(' | '):'';
+
+    // ── Step 3: Generate volunteer code from Firestore counter ──
+    document.querySelector('.ltxt').textContent='جاري إنشاء الكود... / Generating code...';
+    let volCode='';
+    try{ volCode=await fsNextCode(); }catch(e){console.warn('Code gen error:',e);}
+
+    // ── Step 4: Write directly to Firestore (PRIMARY) ──
+    document.querySelector('.ltxt').textContent='جاري حفظ البيانات... / Saving...';
+    await fsAddVolunteer({
+      full_name: fn,
+      code: volCode,
+      phone: wa,
+      national_id: nid,
+      email: emailVal || null,
+      age: +ag || null,
+      commitment_score: null,
+      project_id: null,
+      caravan: null,
+      _ts: new Date().toISOString(),
+      id_photo: photoStr || null,
+      participations: [],
+            // extra registration metadata
+      _reg: {
+        gender: gv,
+        governorate: gov,
+        education: edu,
+        volunteer_type: document.querySelector('input[name=volType]:checked')?.value || '',
+                medical_specialty: document.querySelector('input[name=spec]:checked')?.value || '',
+        previous_volunteer: document.querySelector('input[name=prevVol]:checked')?.value || '',
+        motivation: mot,
+        hear_about: hearFull,
+        submitted_at: new Date().toISOString()
+      }
+    });
+
+    // ── Step 5: Backup to Google Sheet (non-blocking) ──
+    try{
+      const sheetData={
+        timestamp: new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}),
+        fullName:fn,gender:gv,age:ag,governorate:gov,nationalId:nid,
+        whatsapp:wa,email:emailVal||'—',education:edu,
+        volunteerType:document.querySelector('input[name=volType]:checked').value,
+        medicalSpecialty:document.querySelector('input[name=spec]:checked')?.value||'—',
+        previousVolunteer:document.querySelector('input[name=prevVol]:checked').value,
+        motivation:mot,hearAbout:hearFull,
+        photoFiles:photoStr||'—',
+        volCode:volCode
+      };
+      fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(sheetData)});
+    }catch(e){console.warn('Sheet backup error:',e);}
+
+    // ── Done! ──
+    showSuccess(volCode);
+
+  }catch(e){
+    document.getElementById('lov').classList.remove('on');
+    document.getElementById('sbtn').disabled=false;
+    alert('⚠️ خطأ في الإرسال: '+e.message+'\nيرجى المحاولة مرة أخرى.');
+  }
+}
+
+function showDuplicate(){
+  document.getElementById('lov').classList.remove('on');
+  document.getElementById('mainWrap').style.display='none';
+  document.getElementById('sucWrap').style.display='none';
+  document.getElementById('dupWrap').style.display='block';
+  document.getElementById('pf').style.width='100%';
+  document.getElementById('pp').textContent='100%';
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(_retUrl){
+    const retBtn=document.createElement('div');
+    retBtn.style.cssText='text-align:center;margin-top:16px';
+    retBtn.innerHTML='<a href="'+_retUrl+'" style="display:inline-block;background:#17bdef;color:#fff;padding:14px 28px;border-radius:11px;text-decoration:none;font-weight:700;font-size:1rem">↩ العودة لتسجيل الحضور / Back to Attendance</a><p style=\'font-size:.8rem;color:#6B7280;margin-top:8px\'>سيتم التوجيه تلقائياً خلال 8 ثوانٍ...</p>';
+    document.getElementById('sucScreen').appendChild(retBtn);
+    setTimeout(()=>{location.href=_retUrl;},8000);
+  }
+}
+
+function showSuccess(code){
+  const _retUrl=new URLSearchParams(location.search).get('returnUrl');
+  document.getElementById('lov').classList.remove('on');
+  document.getElementById('mainWrap').style.display='none';
+  document.getElementById('sucWrap').style.display='block';
+  document.getElementById('sucScreen').style.display='block';
+  if(code){
+    document.getElementById('sucMsg').innerHTML=
+      'شكراً لتطوعك مع مؤسسة إبراهيم بدران 🤝<br>'+
+      'Thank you for joining Ibrahim Badran Foundation<br><br>'+
+      '<b style="font-size:1.3em;color:var(--p)">كودك: '+code+'</b><br>'+
+      'احتفظ بهذا الكود — ستحتاجه لتسجيل حضورك في القوافل.<br><br>'+
+      'سيتم مراجعة استمارتك والتواصل معك قريباً عبر الواتساب.';
+  }
+  document.getElementById('pf').style.width='100%';
+  document.getElementById('pp').textContent='100%';
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(_retUrl){
+    const retBtn=document.createElement('div');
+    retBtn.style.cssText='text-align:center;margin-top:16px';
+    retBtn.innerHTML='<a href="'+_retUrl+'" style="display:inline-block;background:#17bdef;color:#fff;padding:14px 28px;border-radius:11px;text-decoration:none;font-weight:700;font-size:1rem">↩ العودة لتسجيل الحضور / Back to Attendance</a><p style=\'font-size:.8rem;color:#6B7280;margin-top:8px\'>سيتم التوجيه تلقائياً خلال 8 ثوانٍ...</p>';
+    document.getElementById('sucScreen').appendChild(retBtn);
+    setTimeout(()=>{location.href=_retUrl;},8000);
+  }
+}
+</script>
+
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="تبديل الوضع">🌙</button>
+<script>
+function toggleTheme(){
+  const html=document.documentElement;
+  const btn=document.getElementById('themeToggle');
+  if(html.getAttribute('data-theme')==='dark'){
+    html.removeAttribute('data-theme');
+    localStorage.setItem('theme','light');
+    btn.textContent='🌙';
+  } else {
+    html.setAttribute('data-theme','dark');
+    localStorage.setItem('theme','dark');
+    btn.textContent='☀️';
+  }
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  if(localStorage.getItem('theme')==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    document.getElementById('themeToggle').textContent='☀️';
+  }
+});
+</script>
+
+</body>
+</html>
