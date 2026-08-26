@@ -498,23 +498,14 @@ async function submit(){
   document.getElementById('sbtn').disabled=true;
 
   try{
-    // ── Step 1: Duplicate check via JSONP (against Google Sheet) ──
+    // ── Step 1: Duplicate check via Firestore ──
     document.querySelector('.ltxt').textContent='جاري التحقق... / Verifying...';
-    const isDuplicate = await new Promise((resolve)=>{
-      const callbackName='cb_'+Date.now();
-      const script=document.createElement('script');
-      window[callbackName]=(data)=>{resolve(data.status==='duplicate');delete window[callbackName];script.remove();};
-      script.src=SCRIPT_URL+'?check='+encodeURIComponent(nid)+'&callback='+callbackName;
-      script.onerror=()=>{resolve(false);script.remove();};
-      document.head.appendChild(script);
-      setTimeout(()=>resolve(false),5000);
-    });
-
-    if(isDuplicate){
-      document.getElementById('lov').classList.remove('on');
-      document.getElementById('sbtn').disabled=false;
-      showDuplicate();return;
-    }
+    try{
+      const dupR=await fetch(FS_BASE+':runQuery?key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'volunteers'}],where:{fieldFilter:{field:{fieldPath:'national_id'},op:'EQUAL',value:{stringValue:nid}}},limit:1}})});
+      if(dupR.ok){const dupRes=await dupR.json();const hasDup=dupRes.some(x=>x.document);
+        if(hasDup){document.getElementById('lov').classList.remove('on');document.getElementById('sbtn').disabled=false;showDuplicate();return;}
+      }
+    }catch(e){console.warn('Dup check error:',e);}
 
     // ── Step 2: Upload photos to Cloudinary ──
     document.querySelector('.ltxt').textContent='جاري رفع الصور... / Uploading photos...';
@@ -569,21 +560,8 @@ async function submit(){
       }
     });
 
-    // ── Step 5: Backup to Google Sheet (non-blocking) ──
-    try{
-      const sheetData={
-        timestamp: new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}),
-        fullName:fn,gender:gv,age:ag,governorate:gov,nationalId:nid,
-        whatsapp:wa,email:emailVal||'—',education:edu,
-        volunteerType:document.querySelector('input[name=volType]:checked').value,
-        medicalSpecialty:document.querySelector('input[name=spec]:checked')?.value||'—',
-        previousVolunteer:document.querySelector('input[name=prevVol]:checked').value,
-        motivation:mot,hearAbout:hearFull,
-        photoFiles:photoStr||'—',
-        volCode:volCode
-      };
-      fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(sheetData)});
-    }catch(e){console.warn('Sheet backup error:',e);}
+    // ── Step 5: Backup to Google Sheet (optional, non-blocking) ──
+    try{fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({fullName:fn,nationalId:nid,whatsapp:wa,volCode:volCode})});}catch(e){}
 
     // ── Done! ──
     showSuccess(volCode);
