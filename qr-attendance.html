@@ -147,11 +147,11 @@ async function recordParticipation(vol){
   if(parts.some(x=>x._k===pk)){showAlready(vol.full_name,vol.code||"");return false;}
   const newParts=[...parts,{_k:pk,project_id:project||null,caravan:caravan||null,date:new Date().toISOString()}];
   const patch={participations:newParts};
-  if(project&&vol.project_id!==project)patch.project_id=project;
-  if(caravan&&vol.caravan!==caravan)patch.caravan=caravan;
+  if(project)patch.project_id=project;
+  if(caravan)patch.caravan=caravan;
   const mask=Object.keys(patch).map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');
   const r=await fetch(FS_BASE+'/volunteers/'+vol.id+'?key='+FS_KEY+'&'+mask,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:_objFields(patch)})});
-  if(!r.ok)throw new Error('Firestore update failed');
+  if(!r.ok){const err=await r.text();console.error('Firestore error:',r.status,err);throw new Error('Firestore update failed: '+r.status);}
 }
 
 function showAlready(name,code){
