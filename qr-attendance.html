@@ -110,7 +110,7 @@ footer{margin-top:18px;font-size:.72rem;color:var(--muted)}
 const FS_PROJECT='ibf-volunteer';
 const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FS_PROJECT+'/databases/(default)/documents';
 const FS_KEY='AIzaSyAaFSXhHkkDrNHw_JtIM0e3tdOYY5LLtZc';
-const REG_FORM_URL='https://ibf-form.netlify.app/';
+const REG_FORM_URL='https://hes12ham.github.io/IBF-project/ibf-form-updated.html';
 
 function _toFV(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==='boolean')return{booleanValue:v};if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==='string')return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_toFV)}};if(typeof v==='object'){const f={};for(const k in v)if(v.hasOwnProperty(k))f[k]=_toFV(v[k]);return{mapValue:{fields:f}};}return{stringValue:String(v)};}
 function _fromFV(v){if(!v)return null;if('nullValue' in v)return null;if('booleanValue' in v)return v.booleanValue;if('integerValue' in v)return Number(v.integerValue);if('doubleValue' in v)return v.doubleValue;if('stringValue' in v)return v.stringValue;if('arrayValue' in v)return(v.arrayValue.values||[]).map(_fromFV);if('mapValue' in v){const o={};for(const k in(v.mapValue.fields||{}))o[k]=_fromFV(v.mapValue.fields[k]);return o;}return null;}
