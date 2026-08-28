@@ -312,7 +312,14 @@ const toInt=v=>{const n=parseInt(v,10);return isNaN(n)?null:n;};
 const uid=()=>(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));
 const authErr=e=>{const m={"auth/invalid-credential":"بيانات الدخول غير صحيحة","auth/wrong-password":"كلمة المرور غير صحيحة","auth/user-not-found":"المستخدم غير موجود","auth/email-already-in-use":"البريد مستخدم بالفعل","auth/weak-password":"كلمة المرور ضعيفة (6 أحرف على الأقل)","auth/invalid-email":"بريد غير صالح"};return(m[e.code]||e.message)+" | "+e.code;};
 
-async function nextCode(){let cur=0;try{const d=await restGet('counters','volunteers');if(d&&d.n)cur=d.n;}catch(e){}cur++;await restSet('counters','volunteers',{n:cur});return "V"+String(cur).padStart(4,"0");}
+async function nextCode(){
+ const t=await _tok();
+ const commitUrl=FS_BASE.replace('/documents',':commit');
+ const docPath='projects/ibf-volunteer/databases/(default)/documents/counters/volunteers';
+ const r=await fetch(commitUrl,{method:'POST',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({writes:[{transform:{document:docPath,fieldTransforms:[{fieldPath:'n',increment:{integerValue:'1'}}]}}]})});
+ if(r.ok){const res=await r.json();const results=res.writeResults||[];const tr=results[0]&&results[0].transformResults;if(tr&&tr[0])return 'V'+String(Number(tr[0].integerValue||0)).padStart(4,'0');}
+ const d=await restGet('counters','volunteers');const cur=(d&&d.n||0)+1;await restSet('counters','volunteers',{n:cur});return 'V'+String(cur).padStart(4,'0');
+}
 
 const C={
  vol:()=>({add:d=>restAdd('volunteers',d),doc:id=>({update:d=>restUpdate('volunteers',id,d),delete:()=>restDel('volunteers',id)})}),

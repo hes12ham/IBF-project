@@ -335,19 +335,17 @@ function _toFV(v){
 function _objFields(o){const f={};for(const k in o)if(k!=='id')f[k]=_toFV(o[k]);return f;}
 
 async function fsNextCode(){
+ const commitUrl='https://firestore.googleapis.com/v1/projects/ibf-volunteer/databases/(default)/documents:commit';
+ const docPath='projects/ibf-volunteer/databases/(default)/documents/counters/volunteers';
+ try{
+  const r=await fetch(commitUrl+'?key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({writes:[{transform:{document:docPath,fieldTransforms:[{fieldPath:'n',increment:{integerValue:'1'}}]}}]})});
+  if(r.ok){const res=await r.json();const tr=(res.writeResults||[])[0];if(tr&&tr.transformResults&&tr.transformResults[0])return 'V'+String(Number(tr.transformResults[0].integerValue||0)).padStart(4,'0');}
+ }catch(e){console.warn('Atomic increment failed:',e);}
  let cur=0;
- try{
-  const r=await fetch(FS_BASE+'/counters/volunteers?key='+FS_KEY);
-  if(r.ok){const d=await r.json();if(d.fields&&d.fields.n)cur=Number(d.fields.n.integerValue||0);}
- }catch(e){console.warn('Counter read:',e);}
+ try{const r=await fetch(FS_BASE+'/counters/volunteers?key='+FS_KEY);if(r.ok){const d=await r.json();if(d.fields&&d.fields.n)cur=Number(d.fields.n.integerValue||0);}}catch(e){}
  cur++;
- try{
-  await fetch(FS_BASE+'/counters/volunteers?key='+FS_KEY,{
-   method:'PATCH',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({fields:{n:{integerValue:String(cur)}}})
-  });
- }catch(e){console.warn('Counter write:',e);}
- return "V"+String(cur).padStart(4,"0");
+ await fetch(FS_BASE+'/counters/volunteers?key='+FS_KEY,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{n:{integerValue:String(cur)}}})});
+ return 'V'+String(cur).padStart(4,'0');
 }
 
 async function fsAddVolunteer(data){
