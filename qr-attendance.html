@@ -149,6 +149,7 @@ async function recordParticipation(vol){
   const patch={participations:newParts};
   if(project)patch.project_id=project;
   if(caravan)patch.caravan=caravan;
+  if(project&&caravan){const key=project+"~"+caravan;const as=Array.isArray(vol.assignments)?vol.assignments.slice():[];if(!as.some(a=>a.project_id===project&&a.caravan===caravan))as.push({project_id:project,caravan:caravan});patch.assignments=as;patch.cv_removed=(Array.isArray(vol.cv_removed)?vol.cv_removed:[]).filter(k=>k!==key);}
   const mask=Object.keys(patch).map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');
   const r=await fetch(FS_BASE+'/volunteers/'+vol.id+'?key='+FS_KEY+'&'+mask,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:_objFields(patch)})});
   if(!r.ok){const err=await r.text();console.error('Firestore error:',r.status,err);throw new Error('Firestore update failed: '+r.status);}
