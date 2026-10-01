@@ -357,8 +357,8 @@ function normalize(){state.users.forEach(u=>{if(!Array.isArray(u.assigned))u.ass
 let _pollTimer=null;
 let _lastDataHash='';
 function _dataHash(){return JSON.stringify([state.volunteers.length,state.projects.length,state.clinics.length,state.users.length,state.volunteers.map(v=>v.id+':'+(v.code||'')+'|'+(v.project_id||'')+'|'+(v.caravan||'')+'|'+(v.commitment_score||'')).join(','),state.projects.map(p=>p.id+':'+(p.caravans||[]).length).join(','),state.clinics.map(c=>c.id+':'+(c.entries||[]).length).join(',')]);}
-async function fetchAll(silent){try{const[vols,projs,clinics,users,evts]=await Promise.all([restList('volunteers'),restList('projects'),restList('clinics'),restList('users'),restList('events').catch(()=>[])]);state.volunteers=vols;state.projects=projs;state.clinics=clinics;state.users=users;state.events=evts||[];normalize();try{const s=await restGet('config','settings');if(s)settings=Object.assign({formUrl:"",gsUrl:"",gsToken:"",autosync:false},s);}catch(e){}const h=_dataHash();if(state.session&&(h!==_lastDataHash||!silent)){_lastDataHash=h;try{render();}catch(e){console.warn('Render error in poll:',e);}}startAutoSync();}catch(e){if(e.message&&e.message.includes("429")){console.warn("Rate limited, retrying in 30s...");setTimeout(()=>fetchAll(true),30000);return;}if(!silent){setFlash("خطأ في تحميل البيانات: "+e.message,"error");try{render();}catch(re){}}}}
-function startListeners(){if(_pollTimer)clearInterval(_pollTimer);fetchAll();_pollTimer=setInterval(()=>fetchAll(true),60000);}
+async function fetchAll(silent){try{const[vols,projs,clinics,users,evts]=await Promise.all([restList('volunteers'),restList('projects'),restList('clinics'),restList('users'),restList('events').catch(()=>[])]);state.volunteers=vols;state.projects=projs;state.clinics=clinics;state.users=users;state.events=evts||[];normalize();try{const s=await restGet('config','settings');if(s)settings=Object.assign({formUrl:"",gsUrl:"",gsToken:"",autosync:false},s);}catch(e){}const h=_dataHash();if(state.session&&(h!==_lastDataHash||!silent)){_lastDataHash=h;try{render();}catch(e){console.warn('Render error in poll:',e);}}startAutoSync();}catch(e){if(e.message&&e.message.includes("429")){setFlash("⏳ وصلنا لحد قراءات Firestore حالياً — جرّب بعد قليل بزرار 🔄 / Firestore read limit reached — retry later with 🔄","error");try{render();}catch(re){}return;}if(!silent){setFlash("خطأ في تحميل البيانات: "+e.message,"error");try{render();}catch(re){}}}}
+function startListeners(){if(_pollTimer)clearInterval(_pollTimer);fetchAll();}
 function stopListeners(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
 
 function render(){try{_renderInner();}catch(e){console.error('Render failed:',e);document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><h1 style="color:var(--danger)">خطأ في العرض</h1><p style="color:var(--muted);margin:10px 0">'+e.message+'</p><button onclick="location.reload()" style="background:var(--primary);color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-family:inherit">إعادة تحميل / Reload</button></div></div>';}}
@@ -409,7 +409,7 @@ function renderApp(){
    ${isAdmin()?`<button data-go="settings" ${nb("settings")}>${t("settings")}</button>`:""}</nav>
   <div class="topbar-actions"><span class="user-chip">${esc(who)} (${esc(state.session.role)})</span>
    ${isAdmin()&&effGs()?`<button class="btn-ghost" id="syncBtn" title="${t("sync_now")}">⟳ ${_syncing?"...":t("live")}</button>`:""}
-   <button class="btn-ghost" id="themeBtn">${themeIcon()}</button>
+   <button class="btn-ghost" id="refreshBtn" title="تحديث / Refresh">🔄</button>    <button class="btn-ghost" id="themeBtn">${themeIcon()}</button>
    <button class="btn-ghost" id="langBtn">EN / ع</button>
    <button class="btn-ghost" id="logoutBtn">${t("logout")}</button></div></div>
   <div class="container">${flashHTML()}${body}</div>`;}
@@ -820,7 +820,7 @@ document.querySelectorAll("[data-updatecv]").forEach(f=>f.onsubmit=e=>{e.prevent
  const bkj=$("#backupJson");if(bkj)bkj.onclick=backupJSON;
  const rsb=$("#restoreBtn");if(rsb)rsb.onclick=()=>{const fi=document.getElementById("restoreFile");if(!fi||!fi.files||!fi.files[0]){setFlash(lang==="ar"?"اختر ملف .json أولًا":"Pick a .json file","error");return;}if(!confirm(t("restore_confirm")))return;restoreJSON(fi.files[0]);};
  const crg=$("#crGenerate");if(crg)crg.onclick=()=>{const vols=visibleVolunteers();const projFilter=document.getElementById("crProject")?.value||"";const skillFilter=document.getElementById("crSkill")?.value||"";const fields=[...document.querySelectorAll("#crFields input:checked")].map(c=>c.value);if(!fields.length){setFlash(lang==="ar"?"اختر حقل واحد على الأقل":"Select at least one field","error");return;}let filtered=vols;if(projFilter)filtered=filtered.filter(v=>v.project_id===projFilter);if(skillFilter)filtered=filtered.filter(v=>(v.skills||[]).includes(skillFilter));const labels={full_name:t("name"),code:t("code"),phone:t("phone"),national_id:t("national_id"),email:"Email",commitment_score:t("commitment"),skills:t("skills"),id_photo:"Photo URL",caravan:t("caravan")};const hdr=fields.map(f=>labels[f]||f);const data=[hdr];filtered.forEach(v=>{const row=fields.map(f=>{if(f==="skills")return(v.skills||[]).join(", ");if(f==="commitment_score")return v.commitment_score??"";const pn=f==="project"?(state.projects.find(p=>p.id===v.project_id)||{}).name||"":"";return v[f]||"";});data.push(row);});const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Custom Report");XLSX.writeFile(wb,"custom_report_"+new Date().toISOString().slice(0,10)+".xlsx");setFlash((lang==="ar"?"تم تصدير ":"Exported ")+filtered.length+(lang==="ar"?" متطوع":" volunteers"));};
- const sBtn=$("#syncBtn");if(sBtn)sBtn.onclick=()=>syncFromSheet(false);
+ const rBtn=$("#refreshBtn");if(rBtn)rBtn.onclick=async()=>{rBtn.disabled=true;await fetchAll(false);};const sBtn=$("#syncBtn");if(sBtn)sBtn.onclick=()=>syncFromSheet(false);
  document.querySelectorAll(".cv-qr").forEach(b=>b.onclick=()=>showQR(b.dataset.qrp,b.dataset.qrc));
  document.querySelectorAll("[data-addcv]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const pid=f.dataset.addcv;const p=state.projects.find(x=>x.id===pid);if(!p)return;const nm=f.cname.value.trim();if(!nm)return;if((p.caravans||[]).some(c=>c.name===nm)){setFlash("القافلة موجودة | Caravan exists","error");return;}C.proj().doc(pid).update({caravans:[...(p.caravans||[]),{id:uid(),name:nm,date:f.cdate.value||null,governorates:govPick(f),location:govPick(f).join("، ")||null}]}).then(async()=>done("تمت إضافة القافلة | Caravan added")).catch(fail);});
  const st=$("#selToggle");if(st)st.onclick=()=>{_selMode=!_selMode;render();};
@@ -846,8 +846,8 @@ let _registering=false;
      const body=await resp.text();
      if(!resp.ok){
       if(resp.status===429){
-        document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><h1 style="font-size:1.1rem">⏳</h1><p style="color:var(--muted);margin:12px 0">طلبات كتير — جارٍ إعادة المحاولة...<br>Too many requests — retrying...</p></div></div>';
-        await new Promise(r=>setTimeout(r,10000));location.reload();return;
+        document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><h1 style="font-size:1.1rem">⏳</h1><p style="color:var(--muted);margin:12px 0">تم الوصول لحد قراءات Firestore حالياً.<br>Firestore read limit reached.</p><button onclick="location.reload()" style="background:var(--primary);color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-family:inherit">إعادة المحاولة / Retry</button></div></div>';
+        return;
       }
       if(resp.status===404){
         const isFirstAdmin=user.uid==="atnqHwuNP8TVcV6JdpcnlIGmr8l2";
