@@ -275,6 +275,8 @@ const auth=firebase.auth();
 
 const FS_PROJECT='ibf-volunteer';
 const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FS_PROJECT+'/databases/(default)/documents';
+const netErr=e=>!!e&&(e.code==="auth/network-request-failed"||e.name==="TypeError"||/network|failed to fetch|timeout|load failed/i.test(String(e.message||"")));
+async function withRetry(fn,n){let last;for(let i=0;i<=n;i++){try{return await fn();}catch(e){last=e;if(!netErr(e)||i===n)throw e;await new Promise(r=>setTimeout(r,1200*(i+1)));}}throw last;}
 async function _tok(){return firebase.auth().currentUser.getIdToken();}
 function _toFV(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==='boolean')return{booleanValue:v};if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==='string')return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_toFV)}};if(typeof v==='object'){const f={};for(const k in v)if(v.hasOwnProperty(k))f[k]=_toFV(v[k]);return{mapValue:{fields:f}};}return{stringValue:String(v)};}
 function _fromFV(v){if(!v)return null;if('nullValue' in v)return null;if('booleanValue' in v)return v.booleanValue;if('integerValue' in v)return Number(v.integerValue);if('doubleValue' in v)return v.doubleValue;if('stringValue' in v)return v.stringValue;if('arrayValue' in v)return(v.arrayValue.values||[]).map(_fromFV);if('mapValue' in v){const o={};for(const k in(v.mapValue.fields||{}))o[k]=_fromFV(v.mapValue.fields[k]);return o;}return null;}
@@ -314,7 +316,7 @@ let flash=null;const setFlash=(m,ty="success")=>flash={msg:m,type:ty};
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const toInt=v=>{const n=parseInt(v,10);return isNaN(n)?null:n;};
 const uid=()=>(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));
-const authErr=e=>{const m={"auth/invalid-credential":"بيانات الدخول غير صحيحة","auth/wrong-password":"كلمة المرور غير صحيحة","auth/user-not-found":"المستخدم غير موجود","auth/email-already-in-use":"البريد مستخدم بالفعل","auth/weak-password":"كلمة المرور ضعيفة (6 أحرف على الأقل)","auth/invalid-email":"بريد غير صالح"};let s=m[e.code]||e.message||String(e);if(/429|quota|RESOURCE_EXHAUSTED/i.test(s))s="حد قراءات/كتابات Firestore — حاول لاحقاً ("+s+")";else if(/403|permission/i.test(s))s="صلاحيات Firestore مرفوضة — تأكد من نشر القواعد ("+s+")";return s+(e.code?" | "+e.code:"");};
+const authErr=e=>{const m={"auth/invalid-credential":"بيانات الدخول غير صحيحة","auth/wrong-password":"كلمة المرور غير صحيحة","auth/user-not-found":"المستخدم غير موجود","auth/email-already-in-use":"البريد مستخدم بالفعل","auth/weak-password":"كلمة المرور ضعيفة (6 أحرف على الأقل)","auth/invalid-email":"بريد غير صالح"};if(e&&e.code==="auth/network-request-failed")return"تعذّر الاتصال بخوادم Firebase — تأكد من الإنترنت أو الـ VPN أو الجدار الناري وجرّب تاني / Network error — check your connection";let s=m[e.code]||e.message||String(e);if(/429|quota|RESOURCE_EXHAUSTED/i.test(s))s="حد قراءات/كتابات Firestore — حاول لاحقاً ("+s+")";else if(/403|permission/i.test(s))s="صلاحيات Firestore مرفوضة — تأكد من نشر القواعد ("+s+")";return s+(e.code?" | "+e.code:"");};
 
 async function getOrCreateUser(a,email,pw){try{return(await a.createUserWithEmailAndPassword(email,pw)).user;}catch(e){if(e.code==="auth/email-already-in-use"){try{return(await a.signInWithEmailAndPassword(email,pw)).user;}catch(e2){throw e;}}throw e;}}
 async function nextCode(){
@@ -962,8 +964,8 @@ let _registering=false;
   if(user){
     document.getElementById('app').innerHTML='<div class="auth-wrap"><div class="auth-card"><div class="muted">⏳ جارٍ تحميل الملف الشخصي...</div><p style="font-size:.7rem;color:var(--muted);margin-top:10px;direction:ltr">UID: '+user.uid+'</p></div></div>';
     try{
-     const token=await _tok();
-     const resp=await fetch(FS_BASE+'/users/'+user.uid,{headers:{'Authorization':'Bearer '+token}});
+     const token=await withRetry(()=>_tok(),2);
+     const resp=await withRetry(()=>fetch(FS_BASE+'/users/'+user.uid,{headers:{'Authorization':'Bearer '+token}}),2);
      const body=await resp.text();
      if(!resp.ok){
       if(resp.status===429){
@@ -980,7 +982,7 @@ let _registering=false;
      if(!prof){await auth.signOut();setFlash("لا يوجد ملف لهذا الحساب.","error");try{render();}catch(re){}return;}
      state.session={uid:user.uid,email:user.email,username:prof.username||user.email,role:prof.role||"user"};
      state.view=isAdmin()?"dashboard":"profile";
-    }catch(e){await auth.signOut();setFlash("خطأ في قراءة الملف: "+e.message,"error");try{render();}catch(re){}return;}
+    }catch(e){if(netErr(e)){document.getElementById("app").innerHTML='<div class="auth-wrap"><div class="auth-card"><h1 style="font-size:1.1rem">📡</h1><p style="color:var(--muted);margin:12px 0;line-height:1.8">تعذّر الاتصال بخوادم Firebase.<br>تأكد من الإنترنت أو الـ VPN أو الجدار الناري ثم أعد المحاولة.<br><span dir="ltr" style="font-size:.8rem">Network error — check your connection and retry.</span></p><button onclick="location.reload()" style="background:var(--primary);color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-family:inherit;margin:4px">إعادة المحاولة / Retry</button><button onclick="firebase.auth().signOut().then(()=>location.reload())" style="background:transparent;color:var(--muted);padding:10px 20px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:inherit;margin:4px">تسجيل خروج / Logout</button></div></div>';return;}await auth.signOut();setFlash("خطأ في قراءة الملف: "+e.message,"error");try{render();}catch(re){}return;}
     // render + listeners OUTSIDE try-catch so errors don't trigger signOut
     try{startListeners();}catch(e){console.warn("Listener error:",e);}
     try{render();}catch(e){console.warn("Render error:",e);}
