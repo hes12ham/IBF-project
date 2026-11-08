@@ -107,6 +107,7 @@ footer{margin-top:18px;font-size:.72rem;color:var(--muted)}
 </div>
 
 <script>
+const ibfToday=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const FS_PROJECT='ibf-volunteer';
 const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FS_PROJECT+'/databases/(default)/documents';
 const FS_KEY='AIzaSyAaFSXhHkkDrNHw_JtIM0e3tdOYY5LLtZc';
@@ -142,7 +143,7 @@ async function fsQuery(field,value){
 }
 
 async function recordParticipation(vol){
-  const pk=new Date().toISOString().slice(0,10)+"_"+(project||"")+"_"+(caravan||"");
+  const pk=ibfToday()+"_"+(project||"")+"_"+(caravan||"");
   const parts=Array.isArray(vol.participations)?vol.participations:[];
   if(parts.some(x=>x._k===pk)){showAlready(vol.full_name,vol.code||"");return false;}
   const newParts=[...parts,{_k:pk,project_id:project||null,caravan:caravan||null,date:new Date().toISOString()}];
