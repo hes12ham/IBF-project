@@ -15,8 +15,8 @@
   --sh:0 2px 16px rgba(27,79,138,.10)
 }
 body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
-.hdr{background:linear-gradient(135deg,#0099BB,#00AECF 60%,#00C4E8);color:#fff;text-align:center;padding:2.5rem 1rem 2rem;position:relative;overflow:hidden}
-.hdr .logo-bg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;opacity:.15;border-radius:50%;object-fit:cover;pointer-events:none;z-index:0}
+.hdr{background:linear-gradient(135deg,#0089B1,#14BEF0);color:#fff;text-align:center;padding:2.5rem 1rem 2rem;position:relative;overflow:hidden}
+.hdr .logo-bg{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;opacity:.15;border-radius:50%;object-fit:cover;pointer-events:none;z-index:0}
 .hdr-circle{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.08);pointer-events:none}
 .hdr .c1{width:300px;height:300px;top:-80px;right:-60px;background:radial-gradient(circle,rgba(255,255,255,.06) 0%,transparent 70%)}
 .hdr .c2{width:200px;height:200px;bottom:-60px;left:-40px;background:radial-gradient(circle,rgba(255,255,255,.05) 0%,transparent 70%)}
@@ -119,6 +119,8 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-he
 .theme-toggle{position:fixed;bottom:24px;left:24px;z-index:50;width:48px;height:48px;border-radius:50%;border:none;background:#1B4F8A;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:all .3s ease;display:flex;align-items:center;justify-content:center}
 .theme-toggle:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(0,0,0,.35)}
 [data-theme="dark"] .theme-toggle{background:#4D9FEC}
+.hdr-logo{position:relative;z-index:1;display:block;width:min(260px,70vw);height:auto;margin:0 auto 12px}
+html[lang=en] .hdr-logo{content:url(assets/brand/logo-en-w.png)}
 </style>
 </head>
 <body>
@@ -127,6 +129,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-he
 
 <div class="hdr">
   <img class="logo-bg" src="icon-192.png" alt="" onerror="this.style.display='none'">
+  <img class="hdr-logo" src="assets/brand/logo-ar-w.png" alt="مؤسسة إبراهيم بدران / Ibrahim A. Badran Foundation">
   <div class="hdr-circle c1"></div><div class="hdr-circle c2"></div><div class="hdr-circle c3"></div>
   <div class="badge">استمارة تسجيل المتطوعين الجدد / New Volunteer Registration</div>
 </div>
@@ -582,7 +585,7 @@ function showDuplicate(){
   if(_retUrl){
     const retBtn=document.createElement('div');
     retBtn.style.cssText='text-align:center;margin-top:16px';
-    retBtn.innerHTML='<a href="'+_retUrl+'" style="display:inline-block;background:#17bdef;color:#fff;padding:14px 28px;border-radius:11px;text-decoration:none;font-weight:700;font-size:1rem">↩ العودة لتسجيل الحضور / Back to Attendance</a><p style=\'font-size:.8rem;color:#6B7280;margin-top:8px\'>سيتم التوجيه تلقائياً خلال 8 ثوانٍ...</p>';
+    retBtn.innerHTML='<a href="'+_retUrl+'" style="display:inline-block;background:#14bef0;color:#fff;padding:14px 28px;border-radius:11px;text-decoration:none;font-weight:700;font-size:1rem">↩ العودة لتسجيل الحضور / Back to Attendance</a><p style=\'font-size:.8rem;color:#6B7280;margin-top:8px\'>سيتم التوجيه تلقائياً خلال 8 ثوانٍ...</p>';
     document.getElementById('sucScreen').appendChild(retBtn);
     setTimeout(()=>{location.href=_retUrl;},8000);
   }
@@ -611,7 +614,7 @@ function showSuccess(code){
   if(_retUrl){
     const retBtn=document.createElement('div');
     retBtn.style.cssText='text-align:center;margin-top:16px';
-    retBtn.innerHTML='<a href="'+_retUrl+'" style="display:inline-block;background:#17bdef;color:#fff;padding:14px 28px;border-radius:11px;text-decoration:none;font-weight:700;font-size:1rem">↩ العودة لتسجيل الحضور / Back to Attendance</a><p style=\'font-size:.8rem;color:#6B7280;margin-top:8px\'>سيتم التوجيه تلقائياً خلال 8 ثوانٍ...</p>';
+    retBtn.innerHTML='<a href="'+_retUrl+'" style="display:inline-block;background:#14bef0;color:#fff;padding:14px 28px;border-radius:11px;text-decoration:none;font-weight:700;font-size:1rem">↩ العودة لتسجيل الحضور / Back to Attendance</a><p style=\'font-size:.8rem;color:#6B7280;margin-top:8px\'>سيتم التوجيه تلقائياً خلال 8 ثوانٍ...</p>';
     document.getElementById('sucScreen').appendChild(retBtn);
     setTimeout(()=>{location.href=_retUrl;},8000);
   }
@@ -671,7 +674,7 @@ new MutationObserver(ms=>{for(const m of ms)m.addedNodes.forEach(walk);}).observ
 window.ibfRetranslate();
 })();
 
-(function(){const b=document.createElement("button");b.id="ibfLangBtn";b.setAttribute("data-notr","1");b.style.cssText="position:fixed;top:10px;inset-inline-end:10px;z-index:9999;padding:6px 14px;border-radius:20px;border:1px solid #17bdef;background:#fff;color:#0b7fa6;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.12)";
+(function(){const b=document.createElement("button");b.id="ibfLangBtn";b.setAttribute("data-notr","1");b.style.cssText="position:fixed;top:10px;inset-inline-end:10px;z-index:9999;padding:6px 14px;border-radius:20px;border:1px solid #14bef0;background:#fff;color:#0b7fa6;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.12)";
 const apply=()=>{const L=localStorage.getItem("ibf:lang")||"ar";document.documentElement.lang=L;document.documentElement.dir=L==="ar"?"rtl":"ltr";b.textContent=L==="ar"?"English":"عربي";if(window.ibfRetranslate)window.ibfRetranslate();};
 b.onclick=()=>{try{localStorage.setItem("ibf:lang",(localStorage.getItem("ibf:lang")||"ar")==="ar"?"en":"ar");}catch(e){console.warn("[IBF]",e);}apply();};document.body.appendChild(b);apply();})();
 

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تسجيل حضور / Attendance — IBF</title>
 <style>
-:root{--primary:#17bdef;--primary-dark:#0f9bc7;--accent:#f5a623;--danger:#e2574c;--bg:#eef4f7;--card:#fff;--text:#16313c;--muted:#6b7d86;--border:#dde7ec}
+:root{--primary:#14bef0;--primary-dark:#0089b1;--accent:#fcb414;--danger:#ee3123;--bg:#eef4f7;--card:#fff;--text:#16313c;--muted:#6b7d86;--border:#dde7ec}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Tahoma,Arial,'Segoe UI',sans-serif;background:linear-gradient(160deg,#17bdef22,#eef4f7);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;line-height:1.6}
+body{font-family:Tahoma,Arial,'Segoe UI',sans-serif;background:linear-gradient(160deg,#14bef022,#eef4f7);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;line-height:1.6}
 .card{background:var(--card);border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.12);max-width:460px;width:100%;padding:30px;text-align:center}
 .logo{width:80px;height:80px;border-radius:18px;object-fit:cover;margin:0 auto 14px;display:block}
 h1{font-size:1.25rem;font-weight:800;margin-bottom:4px}
@@ -36,11 +36,12 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .not-found{display:none;text-align:center;padding:10px 0}
 .not-found .icon{font-size:3rem;margin-bottom:10px}
 footer{margin-top:18px;font-size:.72rem;color:var(--muted)}
+.brand-tile{display:block;width:min(220px,60vw);height:auto;margin:0 auto 14px}
+html[lang=en] .brand-tile{content:url(assets/brand/tile-en.png)}
 </style>
 </head>
 <body>
-<div class="card">
-  <div style="width:60px;height:60px;background:var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:1.2rem;font-weight:800;color:#fff">IBF</div>
+<div class="card"><img class="brand-tile" src="assets/brand/tile-ar.png" alt="مؤسسة إبراهيم بدران / Ibrahim A. Badran Foundation">
   <div id="formWrap">
     <h1>تسجيل حضور متطوع / Attendance</h1>
     <div id="caravanBadge" class="caravan-badge" style="display:none"></div>
