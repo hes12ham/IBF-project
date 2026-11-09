@@ -521,7 +521,7 @@ async function submit(){
           formData.append('public_id',nid+'_'+(photoLinks.length+1));
           const cloudRes=await fetch('https://api.cloudinary.com/v1_1/dtcpmnjsf/image/upload',{method:'POST',body:formData});
           const cloudJson=await cloudRes.json();
-          if(cloudJson.secure_url) photoLinks.push(cloudJson.secure_url);
+          if(cloudJson.secure_url) photoLinks.push(/^(heic|heif|tiff?|avif|bmp)$/i.test(cloudJson.format||'')?cloudJson.secure_url.replace(/\.[a-z0-9]+$/i,'.jpg'):cloudJson.secure_url);
         }catch(ce){console.warn('Cloudinary error:',ce);}
       }
     }
