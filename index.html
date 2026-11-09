@@ -251,6 +251,95 @@
   /* Better select styling */
   select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7d86' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;padding-left:28px}
   [dir=rtl] select{background-position:left 10px center;padding-left:28px;padding-right:12px}
+
+/* ===== IBF v2 design system ===== */
+:root{--primary:#17bdef;--primary-dark:#0a7aa8;--primary-darker:#075e83;--ink:#0b2a3a;--accent:#f5a623;--purple:#a02b93;--danger:#d64541;--ok:#1d6b3a;--radius:14px;--ease:cubic-bezier(.2,.8,.2,1)}
+[data-theme="light"]{--bg:#f3f7f9;--card:#fff;--text:#0b2a3a;--muted:#5b7280;--border:#e3edf2;--soft:#f3f7f9;--shadow:0 1px 2px rgba(11,42,58,.05),0 4px 14px rgba(11,42,58,.04);--th-bg:#f3f7f9;--track:#eef4f7;--tint:#e3f6fd;--tint-ink:#075e83;--warn-bg:#fff4e0;--warn-ink:#6b4100;--pur-bg:#f6e6f4;--ok-bg:#e4f5ea}
+[data-theme="dark"]{--bg:#0b161c;--card:#122129;--text:#e6eef2;--muted:#9fb2bd;--border:#213641;--soft:#162a34;--shadow:0 1px 3px rgba(0,0,0,.4);--th-bg:#18303b;--track:#1d3340;--tint:#0f3446;--tint-ink:#8fdcf7;--warn-bg:#3a2a10;--warn-ink:#ffd08a;--pur-bg:#341a31;--ok-bg:#163a24;--ok:#7fd6a0}
+.topbar{position:sticky;top:0;z-index:100;background:var(--card);color:var(--text);border-bottom:1px solid var(--border);padding:10px 20px;gap:14px;transition:box-shadow .25s var(--ease)}
+.topbar.is-scrolled{box-shadow:0 6px 20px rgba(11,42,58,.08)}
+.brand span{font-weight:800}.brand img{height:40px;width:40px;border-radius:10px}
+.nav{gap:4px;flex:1 1 auto}
+.nav button{color:var(--muted);font-weight:600;padding:8px 14px;border-radius:10px;transition:background .2s var(--ease),color .2s}
+.nav button:hover{background:var(--soft);color:var(--text)}
+.nav button.active{background:var(--tint);color:var(--tint-ink);font-weight:700}
+.topbar .btn-ghost{color:var(--text);border-color:var(--border);background:var(--card);min-height:40px;border-radius:10px;font-weight:600}
+.topbar .btn-ghost:hover{background:var(--soft)}
+.user-chip{background:var(--pur-bg);color:var(--purple);font-weight:700}
+.container{max-width:1280px;padding:28px 22px 48px}
+.page-title{font-size:1.9rem;letter-spacing:-.3px}
+.panel{border-radius:16px;box-shadow:var(--shadow)}.panel h2{font-size:1.1rem;font-weight:800}
+.btn-primary{background:var(--primary-dark);border-radius:12px;font-weight:700;min-height:44px;transition:transform .12s,background .2s,box-shadow .2s}
+.btn-primary:hover{background:var(--primary-darker);box-shadow:0 6px 16px rgba(10,122,168,.25)}
+.btn-secondary{background:var(--card);color:var(--tint-ink);border:1px solid var(--border);border-radius:12px;font-weight:700;min-height:40px;transition:transform .12s,background .2s}
+.btn-secondary:hover{background:var(--soft);filter:none}
+.btn-danger-sm{background:transparent;color:var(--danger);border:1px solid rgba(214,69,65,.35);border-radius:10px;transition:background .2s}
+.btn-danger-sm:hover{background:rgba(214,69,65,.08)}
+.btn-primary:active,.btn-secondary:active,.btn-danger-sm:active,.nav button:active,.attn-chip:active,.cvc:active{transform:scale(.97)}
+input,select,textarea{border-radius:10px;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(23,189,239,.2)}
+.data-table th{color:var(--muted);font-size:.8rem}
+.data-table tbody tr{transition:background .15s}.data-table tbody tr:hover{background:var(--soft)}
+.kanban-card{border-radius:16px;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.kanban-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(11,42,58,.10)}
+.stat-card{border-radius:16px;transition:transform .2s var(--ease),box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(11,42,58,.08)}
+.flash{position:fixed;inset-inline-end:20px;bottom:20px;z-index:300;min-width:260px;max-width:440px;margin:0;box-shadow:0 12px 30px rgba(11,42,58,.18);border-radius:12px;font-weight:600;background:var(--card);animation:toastIn .35s var(--ease) both,toastOut .4s var(--ease) 5s forwards}
+.flash-success{color:var(--ok);border:1px solid var(--ok)}
+.flash-error{color:var(--danger);border:1px solid var(--danger);animation:toastIn .35s var(--ease) both,toastOut .4s var(--ease) 9s forwards}
+.dash-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px}
+.dash-head .page-title{margin:0}.dash-sub{color:var(--muted);font-size:.9rem;margin-top:2px}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;gap:2px}
+.seg button{border:none;background:transparent;font-family:inherit;font-weight:600;font-size:.85rem;color:var(--muted);padding:7px 14px;border-radius:9px;cursor:pointer;min-height:36px;transition:background .2s,color .2s}
+.seg button.on{background:var(--ink);color:#fff}[data-theme="dark"] .seg button.on{background:var(--primary);color:#062330}
+.attn{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:1px solid #f6dfb3;border-radius:16px;padding:14px 18px;margin-bottom:18px}
+.attn-title{display:flex;align-items:center;gap:10px;font-weight:800;margin-inline-end:6px}
+.attn-ico{width:36px;height:36px;border-radius:10px;background:var(--warn-bg);color:var(--warn-ink);display:flex;align-items:center;justify-content:center}
+.attn-chip{display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn-ink);border:none;border-radius:999px;padding:8px 14px;font-family:inherit;font-weight:600;font-size:.88rem;cursor:pointer;min-height:40px;transition:transform .15s,filter .15s}
+.attn-chip:hover{transform:translateY(-1px);filter:brightness(.97)}.attn-chip b{font-weight:800}
+.attn-ok{color:var(--ok);font-weight:700}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(11,42,58,.10)}
+.kpi-ico{width:44px;height:44px;border-radius:12px;background:var(--tint);color:var(--tint-ink);display:flex;align-items:center;justify-content:center}
+.kpi-ico.pur{background:var(--pur-bg);color:var(--purple)}
+.kpi-lbl{font-size:.82rem;font-weight:600;color:var(--muted)}
+.kpi-num{font-size:2.1rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:.75rem;color:var(--muted)}
+.mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.mini{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mini b{font-size:1.15rem;font-weight:800;font-variant-numeric:tabular-nums}.mini span{font-size:.8rem;color:var(--muted)}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px}.sec-head h2{font-size:1.1rem;font-weight:800}
+.cv-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:22px}
+.cvc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;text-align:start;font-family:inherit;color:inherit;box-shadow:var(--shadow);transition:transform .2s var(--ease),box-shadow .2s}
+.cvc:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(11,42,58,.10)}
+.cvc.warn{border-style:dashed;border-color:#f0c98a}
+.cvc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.cvc h3{font-size:1rem;font-weight:800;margin:0}
+.st{font-size:.72rem;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.st-done{background:var(--ok-bg);color:var(--ok)}.st-next{background:var(--tint);color:var(--tint-ink)}.st-warn{background:var(--warn-bg);color:var(--warn-ink)}
+.cvc-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}.cvc-meta span{display:inline-flex;align-items:center;gap:5px}
+.bar{height:8px;background:var(--track);border-radius:999px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--primary-dark);border-radius:999px}
+[dir="rtl"] .bar>i{transform-origin:right}[dir="ltr"] .bar>i{transform-origin:left}
+.cvc-row{display:flex;justify-content:space-between;font-size:.8rem}.cvc-row span{color:var(--muted)}
+.cvc-nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cvc-nums div{background:var(--soft);border-radius:12px;padding:8px 10px}.cvc-nums span{display:block;font-size:.72rem;color:var(--muted)}.cvc-nums b{font-size:1.15rem;font-weight:800}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(12px);visibility:hidden}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.container.enter>*{animation:fadeUp .45s var(--ease) both}
+.container.enter>*:nth-child(2){animation-delay:.05s}.container.enter>*:nth-child(3){animation-delay:.1s}.container.enter>*:nth-child(4){animation-delay:.15s}.container.enter>*:nth-child(5){animation-delay:.2s}.container.enter>*:nth-child(n+6){animation-delay:.25s}
+.enter .kpi-grid>*,.enter .cv-cards>*,.enter .kanban-grid>*,.enter .mini-grid>*,.enter .cal-grid>*{animation:fadeUp .5s var(--ease) both}
+.enter .kpi-grid>*:nth-child(2),.enter .cv-cards>*:nth-child(2),.enter .kanban-grid>*:nth-child(2),.enter .mini-grid>*:nth-child(2),.enter .cal-grid>*:nth-child(2){animation-delay:.07s}
+.enter .kpi-grid>*:nth-child(3),.enter .cv-cards>*:nth-child(3),.enter .kanban-grid>*:nth-child(3),.enter .mini-grid>*:nth-child(3),.enter .cal-grid>*:nth-child(3){animation-delay:.14s}
+.enter .kpi-grid>*:nth-child(4),.enter .kanban-grid>*:nth-child(4),.enter .mini-grid>*:nth-child(4),.enter .cal-grid>*:nth-child(4){animation-delay:.21s}
+.enter .kanban-grid>*:nth-child(n+5),.enter .cal-grid>*:nth-child(n+5){animation-delay:.26s}
+.enter .bar>i{animation:grow .9s var(--ease) .2s both}
+@media(max-width:1000px){.kpi-grid,.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cv-cards{grid-template-columns:1fr}}
+@media(max-width:760px){.topbar{padding:8px 12px}.nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.nav::-webkit-scrollbar{display:none}.nav button{white-space:nowrap;flex:none}.brand span{display:none}.container{padding:18px 12px 40px}.page-title{font-size:1.5rem}.panel{padding:16px}.kpi{padding:14px}.kpi-num{font-size:1.6rem}.flash{inset-inline:12px;bottom:12px;max-width:none}.day-actions{position:sticky;bottom:0;background:var(--card);padding:12px;margin:0 -12px;border-top:1px solid var(--border);z-index:5}.day-actions .btn-primary{flex:1}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -417,6 +506,7 @@ function renderAuth(){
   <p class="auth-foot">${t("no_account")} <a id="toRegister">${t("register")}</a> · <a id="langA">EN/ع</a> · <a id="themeA">${themeIcon()}</a></p></div></div>`;}
 
 function renderApp(){
+ const _vk=[state.view,state.openProject,state.openCaravan,state.openClinic,state.openDay,state.clTab].join("|");const _enter=_vk!==window._vk;window._vk=_vk;if(_enter&&state.view==="dashboard")window._countNext=true;
  let body="";
  if(state.view==="dashboard")body=viewDashboard();
  else if(state.view==="volunteers")body=viewVolunteers();
@@ -442,8 +532,25 @@ function renderApp(){
    <button class="btn-ghost" id="refreshBtn" title="تحديث / Refresh">🔄</button>    <button class="btn-ghost" id="themeBtn">${themeIcon()}</button>
    <button class="btn-ghost" id="langBtn">EN / ع</button>
    <button class="btn-ghost" id="logoutBtn">${t("logout")}</button></div></div>
-  <div class="container">${flashHTML()}${body}</div>`;}
+  <div class="container${_enter?" enter":""}">${flashHTML()}${body}</div>`;}
 
+const IC={users:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',act:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',clip:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>',fold:'<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',warn:'<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',cal:'<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',pin:'<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'};
+function ibfRange(P){const d=new Date(),y=d.getFullYear(),m=d.getMonth();const f=(yy,mm,dd)=>yy+"-"+String(mm+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");if(P==="month")return{from:f(y,m,1),to:f(y,m,new Date(y,m+1,0).getDate())};if(P==="quarter"){const q=Math.floor(m/3)*3;return{from:f(y,q,1),to:f(y,q+2,new Date(y,q+3,0).getDate())};}if(P==="year")return{from:f(y,0,1),to:f(y,11,31)};return null;}
+function ibfDashTop(projs,vols,totCases,totExams){const ar=lang==="ar";const L=(a,e)=>ar?a:e;const P=window._dp||"all";const rg=ibfRange(P);const inP=c=>!rg||(c.date&&c.date>=rg.from&&c.date<=rg.to);let cases=totCases,exams=totExams;if(rg){cases=0;exams=0;projs.forEach(p=>(p.caravans||[]).forEach(c=>{if(inP(c)){cases+=nn(c.cases);exams+=nn(c.exams);}}));}
+const plab={all:L("كل الفترات","All time"),year:L("السنة الحالية","This year"),quarter:L("الربع الحالي","This quarter"),month:L("الشهر الحالي","This month")}[P];
+const seg=["all","year","quarter","month"].map(k=>`<button type="button" data-dp="${k}" class="${P===k?"on":""}" aria-pressed="${P===k}">${{all:L("الكل","All"),year:L("السنة","Year"),quarter:L("الربع","Quarter"),month:L("الشهر","Month")}[k]}</button>`).join("");
+const noCv=vols.filter(v=>!v.project_id&&volCvs(v).size===0).length;let noAtt=0;state.clinics.forEach(c=>clDays(c).forEach(d=>{if(!(d.attachments||[]).length)noAtt++;}));const cm={};state.volunteers.forEach(v=>{const k=String(v.code||"").trim();if(k)cm[k]=(cm[k]||0)+1;});const dups=Object.values(cm).filter(n=>n>1).length;const cvs=[];projs.forEach(p=>(p.caravans||[]).forEach(c=>cvs.push({p,c})));const miss=cvs.filter(x=>!x.c.date||!x.c.supervisor).length;
+const chips=[[noCv,"volunteers",L("متطوع بدون قافلة","volunteers without a convoy")],[noAtt,"clinics",L("يوم عيادة بلا كشف حضور","clinic days without an attendance sheet")],[dups,isAdmin()?"settings":"volunteers",L("كود مكرر","duplicate codes")],[miss,"projects",L("قافلة بيانات ناقصة","convoys with missing data")]].filter(x=>x[0]>0).map(x=>`<button type="button" class="attn-chip" data-attn="${x[1]}"><b>${fmtInt(x[0])}</b> ${x[2]}</button>`).join("");
+const attn=`<section class="attn" aria-label="${L("يحتاج انتباهك","Needs attention")}"><div class="attn-title"><span class="attn-ico">${IC.warn}</span>${L("يحتاج انتباهك","Needs attention")}</div>${chips||`<span class="attn-ok">✓ ${L("لا يوجد ما يحتاج انتباهك","Nothing needs your attention")}</span>`}</section>`;
+const kpi=(ic,cls,lbl,n,sub)=>`<article class="kpi"><span class="kpi-ico ${cls}">${ic}</span><span class="kpi-lbl">${lbl}</span><span class="kpi-num" data-count="${n}">${fmtInt(n)}</span><span class="kpi-sub">${sub}</span></article>`;
+const kpis=`<section class="kpi-grid">${kpi(IC.users,"",L("المتطوعون","Volunteers"),vols.length,L("إجمالي المسجّلين","Registered"))}${kpi(IC.act,"",L("إجمالي الحالات","Total cases"),cases,plab)}${kpi(IC.clip,"pur",L("إجمالي الكشوفات","Total exams"),exams,plab)}${kpi(IC.fold,"",L("المشاريع","Projects"),projs.length,fmtInt(cvs.length)+" "+L("قافلة","convoys"))}</section>`;
+const td=ibfToday();const sorted=cvs.slice().sort((a,b)=>(b.c.date||"").localeCompare(a.c.date||"")).slice(0,3);
+const card=x=>{const c=x.c,p=x.p;const missing=!c.date||!c.supervisor;const reg=cvVolsOf(p.id,c.name).length;const att=state.volunteers.filter(v=>(v.participations||[]).some(y=>y.caravan===c.name&&(!y.project_id||y.project_id===p.id))).length;const pct=reg?Math.min(100,Math.round(att/reg*100)):0;const st=missing?`<span class="st st-warn">${L("بيانات ناقصة","Missing data")}</span>`:(c.date>td?`<span class="st st-next">${L("قادمة","Upcoming")}</span>`:`<span class="st st-done">${L("منتهية","Done")}</span>`);const num=v=>nn(v)?fmtInt(v):"—";return `<button type="button" class="cvc${missing?" warn":""}" data-opencv="${p.id}|${esc(c.name)}"><div class="cvc-top"><h3>${esc(c.name)}</h3>${st}</div><div class="cvc-meta"><span>${IC.cal}${c.date?fmtDate(c.date):"—"}</span><span>${IC.pin}${esc(govArr(c).join("، ")||govArr(p).join("، ")||"—")}</span><span>${esc(p.name)}</span></div><div class="cvc-row"><span>${L("الحضور الفعلي","Attendance")}</span><b>${fmtInt(att)} / ${fmtInt(reg)}</b></div><div class="bar"><i style="width:${pct}%"></i></div><div class="cvc-nums"><div><span>${L("الحالات","Cases")}</span><b>${num(c.cases)}</b></div><div><span>${L("الكشوفات","Exams")}</span><b>${num(c.exams)}</b></div></div></button>`;};
+const latest=sorted.length?`<div class="sec-head"><h2>${L("أحدث القوافل","Latest convoys")}</h2><button type="button" class="btn-secondary" data-go="projects">${L("كل القوافل","All convoys")}</button></div><section class="cv-cards">${sorted.map(card).join("")}</section>`:"";
+const upd=new Date().toLocaleTimeString(ar?"ar-EG":"en-GB",{hour:"2-digit",minute:"2-digit"});
+return `<div class="dash-head"><div><h1 class="page-title">${t("dashboard")}</h1><div class="dash-sub">${plab}${rg?" · "+L("حسب تاريخ القافلة","by convoy date"):""} · ${L("آخر تحديث","Updated")} ${upd}</div></div><div class="seg" role="group" aria-label="${L("الفترة","Period")}">${seg}</div></div>${attn}${kpis}`+"\u0001"+latest;}
+function ibfCountUp(){if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;document.querySelectorAll(".kpi-num[data-count]").forEach(el=>{const to=+el.dataset.count||0;if(to<=0)return;const t0=performance.now(),D=900;const step=now=>{const k=Math.min(1,(now-t0)/D);const e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step);};el.textContent="0";requestAnimationFrame(step);});}
+window.addEventListener("scroll",()=>{const tb=document.querySelector(".topbar");if(tb)tb.classList.toggle("is-scrolled",window.scrollY>4);},{passive:true});
 function viewDashboard(){
  const projs=visibleProjects();let vols=visibleVolunteers();
  if(window._df.project)vols=vols.filter(v=>inPrj(v,window._df.project));
@@ -458,9 +565,9 @@ function viewDashboard(){
   gender:(()=>{let m=0,f=0;vols.forEach(v=>{const g=v._reg&&v._reg.gender?v._reg.gender:(v.gender||'');if(g==='ذكر')m++;else if(g==='أنثى')f++;});return[{name:t('male'),count:m},{name:t('female'),count:f}];})()};
  const topVol=[...scored].sort((a,b)=>b.commitment_score-a.commitment_score).slice(0,5);
  const stat=(n,l)=>`<div class="stat-card"><div class="stat-num">${n}</div><div class="stat-label">${l}</div></div>`;
- return `<h1 class="page-title">${t("dashboard")}</h1>
-  <div id="dashFilters" class="panel" style="padding:12px 16px;margin-bottom:14px"></div>
-  <div class="stats-grid">${stat(vols.length,t("volunteers_count"))}${stat(projs.length,t("projects_count"))}${stat(fmtInt(totCases),t("cases_count"))}${stat(fmtInt(totExams),t("exams_count"))}${stat(avg.toFixed(1)+" / 5",t("avg_commit"))}${stat(assigned,t("assigned_vol"))}${stat(unassigned,t("unassigned_vol"))}${stat(vols.length?(totExams/Math.max(1,vols.length)).toFixed(1):0,t("efficiency"))}</div>
+ const _top=ibfDashTop(projs,vols,totCases,totExams).split("\u0001");const mini=(n,l)=>`<div class="mini"><span>${l}</span><b>${n}</b></div>`;
+ return `${_top[0]}<div id="dashFilters" class="panel" style="padding:12px 16px;margin-bottom:14px"></div>
+  <div class="mini-grid">${mini(avg.toFixed(1)+" / 5",t("avg_commit"))}${mini(fmtInt(assigned),t("assigned_vol"))}${mini(fmtInt(unassigned),t("unassigned_vol"))}${mini(vols.length?(totExams/Math.max(1,vols.length)).toFixed(1):0,t("efficiency"))}</div>${_top[1]}
   <div class="grid2"><section class="panel"><h2>${t("per_project")}</h2><div class="chart-box"><canvas id="ch_perProj"></canvas></div></section>
    <section class="panel"><h2>${t("commit_dist")}</h2><div class="chart-box"><canvas id="ch_dist"></canvas></div></section>
    <section class="panel"><h2>${t("by_gov")}</h2><div class="chart-box"><canvas id="ch_gov"></canvas></div></section>
@@ -564,7 +671,7 @@ const cvGrand=(p,cn)=>r2(cvExpSum(p,cn)+cvTransSum(p,cn));
 const cvAgg=(p,cn)=>{const m={};expsOf(p,cn).forEach(e=>expLines(e).forEach(l=>{const a=m[l.k]||(m[l.k]={lb:l.lb,qty:0,total:0});a.qty+=l.qty;a.total=r2(a.total+l.total);}));return Object.values(m);};
 const pSum=(p,k)=>(p.caravans||[]).reduce((s,c)=>s+nn(c[k]),0);
 const pGrand=p=>r2((p.expenses||[]).reduce((s,e)=>s+expTotal(e),0)+(p.transports||[]).reduce((s,x)=>s+nn(x.amount),0));
-const IBF_VERSION="v2.0-p1.3 · 2026-11-08";
+const IBF_VERSION="v2.1 · 2026-11-08";
 const fmtInt=n=>Number(n||0).toLocaleString("en-US");
 const fmtMoney=n=>Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDate=d=>{const m=String(d||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+"/"+m[2]+"/"+m[1]:String(d||"");};
@@ -723,7 +830,7 @@ function clinicDay(c,date){
  <section class="panel"><h2>👥 ${L("حضور المتطوعين","Volunteer attendance")}</h2><div style="display:flex;flex-wrap:wrap;gap:12px">${ed?`<div style="flex:1 1 250px;min-width:230px"><b style="font-size:.85rem">📋 ${L("قاعدة المتطوعين — اسحب للحضور","Master data — drag to attendance")}</b><input id="dayPoolFilter" placeholder="${L("فلترة...","Filter...")}" style="width:100%;margin:6px 0"><button type="button" class="btn-secondary" id="dayAddLinked" style="margin-bottom:6px;font-size:.8rem">＋ ${L("كل متطوعي العيادة","All clinic volunteers")}</button><div id="dayPool" class="pool">${poolHtml}</div></div>`:""}<div id="dayDrop" class="dropzone" style="flex:2 1 360px"><b>✅ ${L("حضور هذا اليوم","Attendance for this day")} (<span id="dayAttCount">${(d.vols||[]).length}</span>)</b><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>${L("الاسم","Name")}</th><th>${L("الوظيفة","Job")}</th><th>${L("البدل","Allowance")}</th><th></th></tr></thead><tbody id="dayAttBody">${attRows}</tbody></table></div><p id="dayDropHint" class="muted" style="text-align:center;padding:14px 0">${ed?L("اسحب متطوع هنا أو اضغط ＋","Drag a volunteer here or press ＋"):L("لا يوجد حضور","No attendance")}</p></div></div></section>
  <section class="panel" style="border-right:4px solid #e2574c"><h2>👤 ${L("مسؤول العيادة","Clinic manager")}</h2><div class="grid-form"><label class="fld">${L("الاسم","Name")}<input name="mgr_name" value="${esc(d.mgr&&d.mgr.name||"")}"></label></div></section>
  <section class="panel"><h2>📎 ${L("صورة / ملف كشف الحضور","Attendance sheet photo / file")}</h2><div>${files}</div>${ed?`<input type="file" name="dayfiles" accept="image/*,.pdf" multiple style="margin-top:8px;font-size:.82rem">`:""}</section>
- </fieldset>${ed?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn-primary" type="submit">💾 ${L("حفظ اليوم","Save day")}</button>${clDay(c,date)?`<button type="button" class="btn-danger-sm" data-cldelday="${c.id}|${date}">🗑 ${L("حذف اليوم","Delete day")}</button>`:""}</div>`:""}</form>`;
+ </fieldset>${ed?`<div class="day-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn-primary" type="submit">💾 ${L("حفظ اليوم","Save day")}</button>${clDay(c,date)?`<button type="button" class="btn-danger-sm" data-cldelday="${c.id}|${date}">🗑 ${L("حذف اليوم","Delete day")}</button>`:""}</div>`:""}</form>`;
 }
 
 function viewEvents(){
@@ -931,6 +1038,7 @@ document.querySelectorAll("[data-updatecv]").forEach(f=>f.onsubmit=e=>{e.prevent
  const cvsave=async(list,msg)=>{try{await saveCvDoc({list});await done(msg);}catch(err){fail(err);}};
  const cdb=$("#clDbBtn");if(cdb)cdb.onclick=()=>{const fi=$("#clDbFile");if(!fi||!fi.files.length){setFlash(lang==="ar"?"اختر ملف Excel":"Pick an Excel file","error");render();return;}cdb.disabled=true;const rd=new FileReader();rd.onload=ev=>doVolDbImport(ev.target.result).catch(err=>{cdb.disabled=false;fail(err);});rd.readAsArrayBuffer(fi.files[0]);};
  ibfDayInit();
+ document.querySelectorAll("[data-dp]").forEach(b=>b.onclick=()=>{window._dp=b.dataset.dp;window._countNext=true;render();});document.querySelectorAll("[data-attn]").forEach(b=>b.onclick=()=>{state.view=b.dataset.attn;state.openProject=null;state.openCaravan=null;state.openClinic=null;state.openDay=null;render();window.scrollTo(0,0);});document.querySelectorAll("[data-opencv]").forEach(b=>b.onclick=()=>{const i=b.dataset.opencv.indexOf("|");state.view="projects";state.openProject=b.dataset.opencv.slice(0,i);state.openCaravan=b.dataset.opencv.slice(i+1);render();window.scrollTo(0,0);});if(window._countNext){window._countNext=false;ibfCountUp();}
  const pbx=$("#clvPickBox");if(pbx){const pcid=pbx.dataset.cid;if(!state.clvPend||state.clvPend.cid!==pcid)state.clvPend={cid:pcid,ids:[]};clvRefresh(pcid);$("#clvPickFilter").oninput=()=>clvRefresh(pcid);const padd=()=>{const vals=[...$("#clvPick").selectedOptions].map(o=>o.value).filter(Boolean);if(!vals.length)return;state.clvPend.ids.push(...vals.filter(x=>!state.clvPend.ids.includes(x)));clvRefresh(pcid);};$("#clvPickAdd").onclick=padd;$("#clvPick").ondblclick=padd;$("#clvPickSave").onclick=()=>{const ids=new Set(state.clvPend.ids);if(!ids.size)return;state.clvPend.ids=[];cvsave(cvList().map(v=>ids.has(v.id)?Object.assign({},v,{clinics:[...(v.clinics||[]).filter(x=>x!==pcid),pcid]}):v),(lang==="ar"?"تمت إضافة ":"Added ")+ids.size);};}
  const clvs=$("#clvAddSearch");if(clvs)clvs.oninput=()=>{const q=clvs.value.trim().toLowerCase();const box=document.getElementById("clvAddRes");const cid=box.dataset.cid;if(q.length<2){box.innerHTML="";return;}const all=cvList().filter(v=>((v.name||"")+" "+(v.national_id||"")+" "+(v.phone||"")+" "+(v.gov_clinic||"")+" "+(v.manager||"")).toLowerCase().includes(q));const res=all.slice(0,12);box.innerHTML=res.length?res.map(v=>{const has=(v.clinics||[]).includes(cid);return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--soft);border-radius:8px;margin-top:6px;font-size:.85rem"><span style="flex:1"><b>'+esc(v.name)+'</b> <span dir="ltr" style="color:var(--muted)">'+esc(v.national_id||"")+"</span></span>"+(has?'<span class="pill">✔</span>':'<button type="button" class="btn-secondary" data-clvadd="'+v.id+'">＋ '+(lang==="ar"?"إضافة":"Add")+"</button>")+"</div>";}).join(""):'<p class="muted">'+(lang==="ar"?"لا نتائج":"No results")+"</p>";const todo=all.filter(v=>!(v.clinics||[]).includes(cid));if(todo.length>1)box.insertAdjacentHTML("afterbegin",'<button type="button" class="btn-primary" data-clvaddall="1" style="margin:6px 0">＋ '+(lang==="ar"?"إضافة الكل (":"Add all (")+todo.length+")</button>");const aab=box.querySelector("[data-clvaddall]");if(aab)aab.onclick=()=>{aab.disabled=true;const ids=new Set(todo.map(v=>v.id));cvsave(cvList().map(v=>ids.has(v.id)?Object.assign({},v,{clinics:[...(v.clinics||[]).filter(x=>x!==cid),cid]}):v),lang==="ar"?"تمت إضافة "+todo.length:"Added "+todo.length);};box.querySelectorAll("[data-clvadd]").forEach(b=>b.onclick=()=>{b.disabled=true;cvsave(cvList().map(v=>v.id===b.dataset.clvadd?Object.assign({},v,{clinics:[...(v.clinics||[]).filter(x=>x!==cid),cid]}):v),lang==="ar"?"تمت الإضافة":"Added");});};
  document.querySelectorAll("[data-clnewvol]").forEach(f=>f.onsubmit=e=>{e.preventDefault();const cid=f.dataset.clnewvol;const q=n=>(f.querySelector('[name="'+n+'"]').value||"").trim();const nid=q("n_nid");if(nid&&cvList().some(v=>v.national_id===nid)){setFlash(lang==="ar"?"الرقم القومي موجود في القاعدة — استخدم البحث لإضافته":"ID already in the database — use search","error");render();return;}cvsave([...cvList(),{id:uid(),name:q("n_name"),national_id:nid,account_number:q("n_acc"),bank:q("n_bank"),job:q("n_job")||"متطوع",phone:q("n_phone"),payment_mode:q("n_pay"),address:q("n_addr"),gov_clinic:q("n_gov"),manager:q("n_mgr"),contract_status:q("n_cs"),contract_text:"",contract_files:[],clinics:[cid]}],lang==="ar"?"تمت الإضافة":"Added");});
