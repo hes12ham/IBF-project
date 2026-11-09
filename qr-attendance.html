@@ -142,6 +142,8 @@ async function fsQuery(field,value){
   return d?_docParse(d.document):null;
 }
 
+function ibfNotify(o){try{const e=Object.assign({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),ts:new Date().toISOString()},o);const f={};for(const k in e)if(e[k]!=null&&e[k]!=="")f[k]={stringValue:String(e[k])};fetch('https://firestore.googleapis.com/v1/projects/ibf-volunteer/databases/(default)/documents:commit?key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({writes:[{transform:{document:'projects/ibf-volunteer/databases/(default)/documents/counters/activity',fieldTransforms:[{fieldPath:'items',appendMissingElements:{values:[{mapValue:{fields:f}}]}}]}}]})}).catch(err=>console.warn("[IBF] notify",err));}catch(err){console.warn("[IBF] notify",err);}}
+
 async function recordParticipation(vol){
   const pk=ibfToday()+"_"+(project||"")+"_"+(caravan||"");
   const parts=Array.isArray(vol.participations)?vol.participations:[];
@@ -154,6 +156,7 @@ async function recordParticipation(vol){
   const mask=Object.keys(patch).map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');
   const r=await fetch(FS_BASE+'/volunteers/'+vol.id+'?key='+FS_KEY+'&'+mask,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:_objFields(patch)})});
   if(!r.ok){const err=await r.text();console.error('Firestore error:',r.status,err);throw new Error('Firestore update failed: '+r.status);}
+  ibfNotify({type:"checkin",name:vol.full_name||"",code:vol.code||"",pid:project||"",caravan:caravan||""});
 }
 
 function showAlready(name,code){

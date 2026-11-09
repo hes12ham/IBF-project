@@ -588,7 +588,10 @@ function showDuplicate(){
   }
 }
 
+function ibfNotify(o){try{const e=Object.assign({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),ts:new Date().toISOString()},o);const f={};for(const k in e)if(e[k]!=null&&e[k]!=="")f[k]={stringValue:String(e[k])};fetch('https://firestore.googleapis.com/v1/projects/ibf-volunteer/databases/(default)/documents:commit?key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({writes:[{transform:{document:'projects/ibf-volunteer/databases/(default)/documents/counters/activity',fieldTransforms:[{fieldPath:'items',appendMissingElements:{values:[{mapValue:{fields:f}}]}}]}}]})}).catch(err=>console.warn("[IBF] notify",err));}catch(err){console.warn("[IBF] notify",err);}}
+
 function showSuccess(code){
+  try{const nmEl=document.querySelector('[name="full_name"],#fullName,#full_name');ibfNotify({type:"register",name:nmEl?nmEl.value.trim():"",code:code||""});}catch(e){console.warn("[IBF]",e);}
   const _retUrl=new URLSearchParams(location.search).get('returnUrl');
   document.getElementById('lov').classList.remove('on');
   document.getElementById('mainWrap').style.display='none';
