@@ -71,3 +71,8 @@ L() وقاموس I18N وفروع الشروط العربية بقت ترجع ل�
 الخطورة: ميزة · الحالة: مُنفَّذ
 جرس ذهبي للأدمن فقط. المصدر: مستند واحد counters/activity (حقل items) بإضافة ذرّية appendMissingElements؛ يكتب فيه الداشبورد (إضافة/تعديل/حذف عبر rest*، مع تجميع العمليات الكثيرة في إدخال واحد)، وصفحة QR (تسجيل حضور)، والفورم (تسجيل متطوع جديد) بدون تسجيل دخول لأن counters مفتوح للكتابة. القراءة: قراءة واحدة للأدمن مع كل تحميل، وتقليص تلقائي لآخر 300 عند تجاوز 400. حالة القراءة لكل أدمن في users/{uid}: notif_read و notif_cut.
 ملاحظة أمنية: نفس فتحة F-001 — أي حد يقدر يكتب في counters؛ تتقفل مع قواعد المرحلة 2 (مثلاً السماح بالـ transform على items فقط).
+
+## v3.0 (2026-11-10) — security update
+- F-001 / F-018: public pages no longer read or update `/volunteers`. They use `vol_lookup`, `name_lookup`, `nid_lookup` (get by exact id only), create-only `checkins` and `feedback`. Takes effect only after `firestore.rules` v3 is published in the Firebase console.
+- Server-side permissions: project/clinic edits follow the admin-granted `assigned` / `assigned_clinics`, deletes need `canDelete`, renames are admin-only, users can't change their own role or permissions.
+- Rules test suite: `tests/rules.test.js` (needs the Firestore emulator; not run in the build sandbox because the emulator download host was blocked).

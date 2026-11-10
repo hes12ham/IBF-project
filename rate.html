@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14bef0">
+<title>تقييم القافلة / Convoy feedback — IBF</title>
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--primary:#14bef0;--action:#00789c;--link:#006f90;--danger:#ee3123;--ok:#17713f;--bg:#eef4f7;--card:#fff;--text:#16313c;--muted:#5b7280;--border:#dde7ec;--soft:#f2f8fb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Tahoma,Arial,'Segoe UI',sans-serif;background:linear-gradient(160deg,#14bef022,#eef4f7);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px 16px}
+.card{background:var(--card);border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.12);max-width:460px;width:100%;padding:26px 22px;text-align:center}
+.brand{display:block;width:min(200px,60vw);height:auto;margin:0 auto 14px}
+h1{font-size:1.25rem;margin-bottom:4px}
+.sub{color:var(--muted);font-size:.9rem;line-height:1.7}
+.badge{display:inline-block;background:#e1f5fd;color:var(--link);border-radius:999px;padding:6px 14px;font-weight:700;margin:12px 0 4px;font-size:.92rem}
+label{display:block;text-align:start;font-weight:700;font-size:.9rem;margin:16px 0 6px}
+input,textarea{width:100%;font-family:inherit;font-size:1rem;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--text);min-height:48px}
+textarea{min-height:80px;resize:vertical}
+#code{text-align:center;letter-spacing:3px;font-weight:700;text-transform:uppercase}
+.who{min-height:22px;font-size:.9rem;margin-top:6px}
+.stars{display:flex;justify-content:center;gap:4px;direction:ltr}
+.stars button{background:none;border:0;font-size:2.1rem;line-height:1;color:#b8c5cc;cursor:pointer;min-width:48px;min-height:52px;border-radius:10px}
+.stars button.on{color:#f5b301}
+.stars button:focus-visible{outline:2px solid var(--action);outline-offset:2px}
+.hint{font-size:.8rem;color:var(--muted);margin-top:2px}
+.go{width:100%;margin-top:20px;background:var(--action);color:#fff;border:0;border-radius:12px;font-family:inherit;font-weight:700;font-size:1.05rem;min-height:52px;cursor:pointer}
+.go:disabled{opacity:.6}
+.err{color:var(--danger);font-size:.88rem;min-height:20px;margin-top:8px}
+.msg{padding:18px 6px;line-height:1.9}
+.msg .big{font-size:2.6rem;display:block;margin-bottom:6px}
+.foot{color:var(--muted);font-size:.78rem;margin-top:18px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="card" aria-live="polite">
+  <img class="brand" src="assets/brand/tile-ar.png" alt="مؤسسة إبراهيم بدران / Ibrahim A. Badran Foundation">
+  <div id="loading" class="msg">⏳ جاري التحميل... / Loading...</div>
+
+  <div id="closed" class="msg" hidden><span class="big">🔒</span><b id="closedTitle">التقييم مقفول / Feedback is closed</b><p class="sub" id="closedMsg"></p></div>
+
+  <form id="form" hidden novalidate>
+    <h1>قيّم مشاركتك / Rate your convoy</h1>
+    <div class="badge" id="cvName"></div>
+    <p class="sub" id="cvMeta"></p>
+
+    <label for="code">كود المتطوع / Volunteer code</label>
+    <input id="code" inputmode="text" autocomplete="off" placeholder="V0001" required>
+    <div class="who" id="who"></div>
+
+    <label id="lblConvoy">تنظيم القافلة / Convoy organisation</label>
+    <div class="stars" data-name="convoy" role="radiogroup" aria-labelledby="lblConvoy"></div>
+    <p class="hint">1 = ضعيف / weak · 5 = ممتاز / excellent</p>
+
+    <label id="lblSup">مسؤول المتطوعين / Volunteer manager <span id="supName" class="sub"></span></label>
+    <div class="stars" data-name="sup" role="radiogroup" aria-labelledby="lblSup"></div>
+
+    <label for="note">اقتراح أو ملاحظة (اختياري) / Suggestion (optional)</label>
+    <textarea id="note" maxlength="500" placeholder="اكتب رأيك هنا / Write your feedback"></textarea>
+
+    <p class="err" id="err" role="alert"></p>
+    <button class="go" id="go" type="submit">إرسال التقييم / Send feedback</button>
+  </form>
+
+  <div id="done" class="msg" hidden><span class="big">✅</span><b>شكرًا على رأيك! / Thank you!</b><p class="sub">رأيك بيساعدنا نحسّن القوافل الجاية.<br>Your feedback helps us improve future convoys.</p></div>
+  <div id="already" class="msg" hidden><span class="big">ℹ️</span><b>أنت قيّمت القافلة دي قبل كده / You already rated this convoy</b><p class="sub">كل متطوع بيقيّم مرة واحدة.<br>Each volunteer can rate once.</p></div>
+  <p class="foot">مؤسسة إبراهيم بدران / IBF</p>
+</main>
+<script>
+const FS_PROJECT='ibf-volunteer';
+const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FS_PROJECT+'/databases/(default)/documents';
+const FS_KEY='AIzaSyAaFSXhHkkDrNHw_JtIM0e3tdOYY5LLtZc';
+const $=id=>document.getElementById(id);
+const token=new URLSearchParams(location.search).get('t')||'';
+const show=id=>['loading','closed','form','done','already'].forEach(x=>$(x).hidden=(x!==id));
+const fv=v=>{if(!v)return null;if('stringValue' in v)return v.stringValue;if('timestampValue' in v)return v.timestampValue;if('integerValue' in v)return Number(v.integerValue);if('arrayValue' in v)return(v.arrayValue.values||[]).map(fv);return null;};
+let RO=null,VOL=null;const val={convoy:0,sup:0};
+function stars(){document.querySelectorAll('.stars').forEach(box=>{const n=box.dataset.name;box.innerHTML=[1,2,3,4,5].map(i=>'<button type="button" role="radio" aria-checked="'+(val[n]===i)+'" aria-label="'+i+' / 5" data-v="'+i+'" class="'+(i<=val[n]?'on':'')+'">★</button>').join('');});}
+document.addEventListener('click',e=>{const b=e.target.closest('.stars button');if(!b)return;const n=b.parentElement.dataset.name;val[n]=+b.dataset.v;stars();$('err').textContent='';});
+async function init(){
+  if(!token){show('closed');$('closedTitle').textContent='الرابط ناقص / Invalid link';$('closedMsg').innerHTML='امسح QR التقييم من مسؤول القافلة تاني.<br>Scan the feedback QR again.';return;}
+  try{const r=await fetch(FS_BASE+'/rate_open/'+encodeURIComponent(token)+'?key='+FS_KEY);
+    if(!r.ok){show('closed');$('closedTitle').textContent='الرابط مش صالح / Link not valid';$('closedMsg').innerHTML='اطلب QR جديد من مسؤول القافلة.<br>Ask the convoy manager for a new QR.';return;}
+    const d=await r.json();const f=d.fields||{};RO={pid:fv(f.pid),cn:fv(f.cn),pname:fv(f.pname),sup:fv(f.sup),until:fv(f.until),vids:fv(f.vids)||[]};
+  }catch(e){show('closed');$('closedTitle').textContent='تعذّر الاتصال / Connection problem';$('closedMsg').innerHTML='اتأكد من الإنترنت وجرّب تاني.<br>Check your connection and try again.<br><button class="go" style="margin-top:12px" onclick="location.reload()">حاول تاني / Retry</button>';return;}
+  const until=new Date(RO.until);
+  if(isNaN(until)||Date.now()>until.getTime()){show('closed');$('closedMsg').innerHTML='التقييم كان متاح لحد '+(isNaN(until)?'':until.toLocaleDateString('ar-EG'))+'.<br>Feedback was open until '+(isNaN(until)?'':until.toLocaleDateString('en-GB'))+'.';return;}
+  $('cvName').textContent=RO.cn;$('cvMeta').innerHTML=(RO.pname?RO.pname+'<br>':'')+'متاح لحد / Open until: '+until.toLocaleDateString('ar-EG');
+  $('supName').textContent=RO.sup?'('+RO.sup+')':'';stars();show('form');$('code').focus();
+}
+let deb=null;
+$('code').addEventListener('input',()=>{clearTimeout(deb);VOL=null;$('who').textContent='';const c=$('code').value.trim().toUpperCase();if(c.length<2)return;deb=setTimeout(()=>lookup(c),450);});
+async function lookup(c){$('who').textContent='⏳';try{const r=await fetch(FS_BASE+'/vol_lookup/'+encodeURIComponent(c)+'?key='+FS_KEY);if(!r.ok){$('who').innerHTML='<span style="color:var(--danger)">❌ كود غير مسجّل / Code not found</span>';return null;}const d=await r.json();const f=d.fields||{};VOL={vid:fv(f.vid),name:fv(f.name),code:fv(f.code)};
+  if(!RO.vids.includes(VOL.vid)){$('who').innerHTML='<span style="color:var(--danger)">'+esc(VOL.name)+' — مش مسجّل في القافلة دي / not in this convoy</span>';VOL=null;return null;}
+  $('who').innerHTML='✅ <b>'+esc(VOL.name)+'</b>';return VOL;}catch(e){$('who').textContent='';return null;}}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+$('form').addEventListener('submit',async e=>{e.preventDefault();const err=$('err');err.textContent='';
+  const c=$('code').value.trim().toUpperCase();if(!c){err.textContent='اكتب كودك / Enter your code';$('code').focus();return;}
+  if(!VOL||VOL.code!==c){await lookup(c);if(!VOL){err.textContent='الكود ده مش في القافلة دي / This code is not in this convoy';return;}}
+  if(!val.convoy){err.textContent='قيّم تنظيم القافلة / Rate the convoy organisation';return;}
+  if(!val.sup){err.textContent='قيّم مسؤول المتطوعين / Rate the volunteer manager';return;}
+  const btn=$('go');btn.disabled=true;btn.textContent='⏳ جاري الإرسال... / Sending...';
+  const fields={ro:{stringValue:token},pid:{stringValue:RO.pid||''},cn:{stringValue:RO.cn||''},vid:{stringValue:VOL.vid},code:{stringValue:VOL.code||c},convoy:{integerValue:String(val.convoy)},sup:{integerValue:String(val.sup)},note:{stringValue:$('note').value.trim().slice(0,500)},at:{stringValue:new Date().toISOString()}};
+  try{const r=await fetch(FS_BASE+'/feedback?documentId='+encodeURIComponent(token+'__'+VOL.vid)+'&key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    if(r.ok){show('done');return;}
+    if(r.status===409){show('already');return;}
+    if(r.status===403){err.textContent='التقييم مقفول أو الكود مش في القافلة / Feedback closed or code not in this convoy';}
+    else err.textContent='حصل خطأ ('+r.status+') — جرّب تاني / Error, try again';
+  }catch(x){err.textContent='مفيش إنترنت — جرّب تاني / No connection, try again';}
+  btn.disabled=false;btn.textContent='إرسال التقييم / Send feedback';});
+init();
+</script>
+<script>(function(){function s(){var e=document.getElementById("offlineBar");if(navigator.onLine){if(e)e.remove();return;}if(!e){e=document.createElement("div");e.id="offlineBar";e.setAttribute("role","status");e.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#2b2b2b;color:#fff;border-radius:12px;padding:12px 16px;font-size:.9rem;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)";document.body.appendChild(e);}e.textContent="📡 مفيش اتصال بالإنترنت — اتأكد من النت وجرّب تاني / You're offline";}window.addEventListener("offline",s);window.addEventListener("online",s);s();})();</script>
+</body>
+</html>

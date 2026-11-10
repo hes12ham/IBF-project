@@ -1,0 +1,157 @@
+rules_version = '2';
+// IBF Dashboard — Firestore security rules (v3, 2026-11-10)
+// Staff = signed-in users with a profile in /users. Admin decides every permission from the Users screen.
+// Public pages (registration form, QR attendance, QR feedback) never read or write /volunteers directly:
+// they use public lookup documents (get by exact id only) and create-only check-in / feedback documents.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function hasMe() { return signedIn() && exists(userPath()); }
+    function me() { return get(userPath()).data; }
+    function isAdmin() { return hasMe() && me().role == 'admin'; }
+    function staff() { return hasMe(); }
+    function screen(s) { return isAdmin() || (hasMe() && me().get('screen_access', []).hasAny([s])); }
+    function canDel() { return isAdmin() || (hasMe() && me().get('canDelete', false) == true); }
+    function prjEdit(pid) { return isAdmin() || (hasMe() && me().get('assigned', []).hasAny([{'id': pid, 'perm': 'edit'}, pid])); }
+    function clEdit(cid) { return isAdmin() || (hasMe() && me().get('assigned_clinics', []).hasAny([{'id': cid, 'role': 'team_leader'}, cid])); }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function keepsName() { return !changed().hasAny(['name']); }
+    function str(v, n) { return v is string && v.size() <= n; }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == uid
+                    && request.resource.data.role == 'user'
+                    && request.resource.data.get('canDelete', false) == false
+                    && request.resource.data.get('assigned', []).size() == 0
+                    && request.resource.data.get('assigned_clinics', []).size() == 0
+                    && !request.resource.data.get('screen_access', []).hasAny(['users', 'settings']));
+      allow update: if isAdmin()
+                    || (signedIn() && request.auth.uid == uid && changed().hasOnly(['notif_read', 'notif_cut']));
+      allow delete: if isAdmin();
+    }
+
+    // ---------- settings ----------
+    match /config/{doc} {
+      allow read: if staff();
+      allow write: if isAdmin();
+    }
+
+    // ---------- counters ----------
+    match /counters/volunteers {
+      allow get: if true;
+      allow create: if staff();
+      allow update: if staff() || request.resource.data.n == resource.data.n + 1;
+    }
+    match /counters/activity {
+      allow read: if staff();
+      allow create: if staff();
+      // public pages may only append notifications
+      allow update: if staff()
+                    || (changed().hasOnly(['items']) && request.resource.data.items.size() <= resource.data.items.size() + 2);
+    }
+
+    // ---------- volunteers ----------
+    match /volunteers/{vid} {
+      allow read: if staff();
+      allow create: if staff()
+                    || (str(request.resource.data.full_name, 120)
+                        && request.resource.data.keys().hasOnly(['full_name', 'code', 'phone', 'national_id', 'email', 'age',
+                             'commitment_score', 'project_id', 'caravan', '_ts', 'id_photo', 'participations', '_reg'])
+                        && request.resource.data.get('commitment_score', null) == null
+                        && request.resource.data.get('participations', []).size() == 0);
+      allow update: if screen('volunteers') || screen('projects') || screen('ratings') || screen('mclinics');
+      allow delete: if canDel() && screen('volunteers');
+    }
+
+    // ---------- public lookups (exact id only, no listing) ----------
+    match /vol_lookup/{id} {
+      allow get: if true;
+      allow list: if staff();
+      allow create: if staff() || (request.resource.data.keys().hasOnly(['vid', 'code', 'name']) && str(request.resource.data.name, 120));
+      allow update, delete: if staff();
+    }
+    match /name_lookup/{id} {
+      allow get: if true;
+      allow list: if staff();
+      allow create: if staff() || (request.resource.data.keys().hasOnly(['vid', 'code', 'name']) && str(request.resource.data.name, 120));
+      allow update, delete: if staff();
+    }
+    match /nid_lookup/{id} {
+      allow get: if true;
+      allow list: if staff();
+      allow create: if staff() || (request.resource.data.keys().hasOnly(['vid', 'code', 'name']) && str(request.resource.data.name, 120));
+      allow update, delete: if staff();
+    }
+    match /lookups_meta/{doc} {
+      allow read, write: if staff();
+    }
+
+    // ---------- QR attendance check-ins (create once, merged by admin) ----------
+    match /checkins/{cid} {
+      allow get: if true;   // lets the QR page tell 'already checked in' apart from other errors
+      allow list: if staff();
+      allow create: if request.resource.data.keys().hasOnly(['vid', 'code', 'name', 'project_id', 'caravan', '_k', 'date'])
+                    && str(request.resource.data.vid, 64) && str(request.resource.data._k, 300);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- convoys / projects ----------
+    match /projects/{pid} {
+      allow read: if staff();
+      allow create: if isAdmin();
+      allow update: if prjEdit(pid) && (isAdmin() || keepsName());
+      allow delete: if isAdmin() || (canDel() && prjEdit(pid));
+    }
+
+    // ---------- clinics (sys-cvols = shared clinic volunteers list) ----------
+    match /clinics/{cid} {
+      allow read: if staff();
+      allow create: if isAdmin() || (cid == 'sys-cvols' && screen('clinics'));
+      allow update: if (cid == 'sys-cvols' && screen('clinics'))
+                    || (cid != 'sys-cvols' && clEdit(cid) && (isAdmin() || keepsName()));
+      allow delete: if cid != 'sys-cvols' && (isAdmin() || (canDel() && clEdit(cid)));
+    }
+
+    // ---------- mobile clinics (visits) ----------
+    match /mobile_clinics/{id} {
+      allow read: if staff();
+      allow create: if screen('mclinics');
+      allow update: if screen('mclinics') && (isAdmin() || keepsName());
+      allow delete: if isAdmin() || (canDel() && screen('mclinics'));
+    }
+
+    // ---------- events ----------
+    match /events/{id} {
+      allow read: if staff();
+      allow create, update: if screen('events');
+      allow delete: if canDel() && screen('events');
+    }
+
+    // ---------- ratings ----------
+    // rate_open/{token}: one per convoy, opened by a convoy editor; the token is the QR secret.
+    match /rate_open/{token} {
+      allow get: if true;
+      allow list: if staff();
+      allow create, update: if staff() && prjEdit(request.resource.data.pid);
+      allow delete: if isAdmin();
+    }
+    // feedback/{token}__{vid}: a volunteer rates the convoy and its volunteer manager once, before the window closes.
+    match /feedback/{fid} {
+      allow read: if staff();
+      allow create: if request.resource.data.keys().hasOnly(['ro', 'pid', 'cn', 'vid', 'code', 'convoy', 'sup', 'note', 'at'])
+                    && fid == request.resource.data.ro + '__' + request.resource.data.vid
+                    && exists(/databases/$(database)/documents/rate_open/$(request.resource.data.ro))
+                    && request.time < get(/databases/$(database)/documents/rate_open/$(request.resource.data.ro)).data.until
+                    && get(/databases/$(database)/documents/rate_open/$(request.resource.data.ro)).data.vids.hasAny([request.resource.data.vid])
+                    && request.resource.data.convoy is int && request.resource.data.convoy >= 1 && request.resource.data.convoy <= 5
+                    && request.resource.data.sup is int && request.resource.data.sup >= 1 && request.resource.data.sup <= 5
+                    && str(request.resource.data.get('note', ''), 500);
+      allow delete: if isAdmin();
+    }
+  }
+}

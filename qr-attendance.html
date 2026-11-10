@@ -136,6 +136,12 @@ function switchTab(tab){
   document.getElementById("nameForm").style.display=tab==="name"?"block":"none";
 }
 
+const ibfNormName=s=>String(s||"").trim().replace(/\s+/g," ").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/[ًٌٍَُِّْـ]/g,"").toLowerCase();
+async function lookupVol(field,value){
+  const col=field==='code'?'vol_lookup':field==='national_id'?'nid_lookup':'name_lookup';const id=field==='code'?String(value).trim().toUpperCase():field==='national_id'?String(value).trim():ibfNormName(value);
+  try{const r=await fetch(FS_BASE+'/'+col+'/'+encodeURIComponent(id)+'?key='+FS_KEY);if(r.ok){const d=_docParse(await r.json());if(d.vid)return{id:d.vid,full_name:d.name||'',code:d.code||'',_lk:1};}}catch(e){console.warn('[IBF] lookup',e);}
+  try{return await fsQuery(field==='code'?'code':field,field==='code'?String(value).trim().toUpperCase():String(value).trim());}catch(e){return null;}
+}
 async function fsQuery(field,value){
   const r=await fetch(FS_BASE+':runQuery?key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'volunteers'}],where:{fieldFilter:{field:{fieldPath:field},op:'EQUAL',value:{stringValue:value}}},limit:1}})});
   if(!r.ok)return null;
@@ -147,6 +153,18 @@ function ibfNotify(o){try{const e=Object.assign({id:Date.now().toString(36)+Math
 
 async function recordParticipation(vol){
   const pk=ibfToday()+"_"+(project||"")+"_"+(caravan||"");
+  /* new secure path: one check-in document per volunteer per convoy per day */
+  try{
+    const cid=(pk+"_"+vol.id).replace(/[\/#?]/g,"-").slice(0,700);
+    const body={fields:_objFields({vid:vol.id,code:vol.code||"",name:vol.full_name||"",project_id:project||"",caravan:caravan||"",_k:pk,date:new Date().toISOString()})};
+    const r=await fetch(FS_BASE+'/checkins?documentId='+encodeURIComponent(cid)+'&key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(r.ok){ibfNotify({type:"checkin",name:vol.full_name||"",code:vol.code||"",pid:project||"",caravan:caravan||""});return true;}
+    if(r.status===409){showAlready(vol.full_name,vol.code||"");return false;}
+    if(r.status===403){try{const g=await fetch(FS_BASE+'/checkins/'+encodeURIComponent(cid)+'?key='+FS_KEY);if(g.ok){showAlready(vol.full_name,vol.code||"");return false;}}catch(e){}}
+    if(r.status!==403&&r.status!==404)throw new Error('Firestore '+r.status);
+  }catch(e){if(/Firestore \d/.test(e.message))throw e;console.warn('[IBF] checkin',e);}
+  /* legacy path (old rules) */
+  if(vol._lk){try{const g=await fetch(FS_BASE+'/volunteers/'+vol.id+'?key='+FS_KEY);if(g.ok)vol=Object.assign(_docParse(await g.json()),{});}catch(e){}}
   const parts=Array.isArray(vol.participations)?vol.participations:[];
   if(parts.some(x=>x._k===pk)){showAlready(vol.full_name,vol.code||"");return false;}
   const newParts=[...parts,{_k:pk,project_id:project||null,caravan:caravan||null,date:new Date().toISOString()}];
@@ -192,8 +210,8 @@ ci.addEventListener("input",()=>{
   if(c.length<2){prev.innerHTML="";return;}
   _debT=setTimeout(async()=>{
     prev.innerHTML="⏳ جارٍ البحث...";
-    try{const vol=await fsQuery('code',c);
-      if(vol)prev.innerHTML="✅ <b>"+esc(vol.full_name)+"</b>"+(vol.phone?" · "+esc(vol.phone):"");
+    try{const vol=await lookupVol('code',c);
+      if(vol)prev.innerHTML="✅ <b>"+esc(vol.full_name)+"</b>";
       else prev.innerHTML='<span style="color:var(--danger)">❌ كود غير مسجّل / Code not found</span>';
     }catch(e){prev.innerHTML='<span style="color:var(--danger)">خطأ / Error</span>';}
   },500);
@@ -206,7 +224,7 @@ document.getElementById("codeForm").onsubmit=async e=>{
   if(!code){err.textContent="أدخل الكود / Enter code";return;}
   const btn=document.getElementById("codeBtn");btn.disabled=true;btn.textContent="⏳...";
   try{
-    const vol=await fsQuery('code',code);
+    const vol=await lookupVol('code',code);
     if(!vol){btn.disabled=false;btn.textContent="تسجيل الحضور / Log Attendance";showNotFound();return;}
     const ok=await recordParticipation(vol);
     if(ok===false)return;
@@ -224,7 +242,7 @@ document.getElementById("nameForm").onsubmit=async e=>{
   const btn=document.getElementById("nameBtn");btn.disabled=true;btn.textContent="⏳...";
   try{
     btn.textContent="⏳ جارٍ البحث في قاعدة المتطوعين...";
-    const vol=await fsQuery('national_id',nid);
+    const vol=await lookupVol('national_id',nid);if(vol&&!vol.full_name)vol.full_name=name;
     if(!vol){
       btn.disabled=false;btn.textContent="تسجيل الحضور / Log Attendance";
       showNotFound();
@@ -279,5 +297,6 @@ const apply=()=>{const L=localStorage.getItem("ibf:lang")||"ar";document.documen
 b.onclick=()=>{try{localStorage.setItem("ibf:lang",(localStorage.getItem("ibf:lang")||"ar")==="ar"?"en":"ar");}catch(e){console.warn("[IBF]",e);}apply();};document.body.appendChild(b);apply();})();
 
 </script>
+<script>(function(){function s(){var e=document.getElementById("offlineBar");if(navigator.onLine){if(e)e.remove();return;}if(!e){e=document.createElement("div");e.id="offlineBar";e.setAttribute("role","status");e.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#2b2b2b;color:#fff;border-radius:12px;padding:12px 16px;font-size:.9rem;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)";document.body.appendChild(e);}e.textContent="📡 مفيش اتصال بالإنترنت — اتأكد من النت وجرّب تاني / You're offline";}window.addEventListener("offline",s);window.addEventListener("online",s);s();})();</script>
 </body>
 </html>

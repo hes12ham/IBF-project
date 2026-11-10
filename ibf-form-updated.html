@@ -351,13 +351,16 @@ async function fsNextCode(){
  return 'V'+String(cur).padStart(4,'0');
 }
 
+const ibfNormName=s=>String(s||"").trim().replace(/\s+/g," ").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/[ًٌٍَُِّْـ]/g,"").toLowerCase();
+async function fsAddLookups(vid,code,name,nid){const f={vid:{stringValue:vid},name:{stringValue:name||''},code:{stringValue:(code||'').toUpperCase()}};const mk=(col,id)=>id?fetch(FS_BASE+'/'+col+'?documentId='+encodeURIComponent(id)+'&key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:f})}).catch(e=>console.warn('[IBF] lookup',e)):null;await Promise.all([mk('vol_lookup',(code||'').toUpperCase()),mk('nid_lookup',nid),mk('name_lookup',ibfNormName(name))]);}
 async function fsAddVolunteer(data){
  const r=await fetch(FS_BASE+'/volunteers?key='+FS_KEY,{
   method:'POST',headers:{'Content-Type':'application/json'},
   body:JSON.stringify({fields:_objFields(data)})
  });
  if(!r.ok){const t=await r.text();throw new Error('Firestore '+r.status+': '+t.slice(0,200));}
- return await r.json();
+ const doc=await r.json();try{await fsAddLookups(doc.name.split('/').pop(),data.code,data.full_name,data.national_id);}catch(e){console.warn('[IBF] lookups',e);}
+ return doc;
 }
 
 // ══════════════════════════════════════════════
@@ -501,6 +504,10 @@ async function submit(){
   try{
     // ── Step 1: Duplicate check via Firestore ──
     document.querySelector('.ltxt').textContent='جاري التحقق... / Verifying...';
+    try{
+      const lk=await fetch(FS_BASE+'/nid_lookup/'+encodeURIComponent(nid)+'?key='+FS_KEY);
+      if(lk.ok){document.getElementById('lov').classList.remove('on');document.getElementById('sbtn').disabled=false;showDuplicate();return;}
+    }catch(e){console.warn('Dup lookup error:',e);}
     try{
       const dupR=await fetch(FS_BASE+':runQuery?key='+FS_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'volunteers'}],where:{fieldFilter:{field:{fieldPath:'national_id'},op:'EQUAL',value:{stringValue:nid}}},limit:1}})});
       if(dupR.ok){const dupRes=await dupR.json();const hasDup=dupRes.some(x=>x.document);
@@ -679,5 +686,6 @@ const apply=()=>{const L=localStorage.getItem("ibf:lang")||"ar";document.documen
 b.onclick=()=>{try{localStorage.setItem("ibf:lang",(localStorage.getItem("ibf:lang")||"ar")==="ar"?"en":"ar");}catch(e){console.warn("[IBF]",e);}apply();};document.body.appendChild(b);apply();})();
 
 </script>
+<script>(function(){function s(){var e=document.getElementById("offlineBar");if(navigator.onLine){if(e)e.remove();return;}if(!e){e=document.createElement("div");e.id="offlineBar";e.setAttribute("role","status");e.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#2b2b2b;color:#fff;border-radius:12px;padding:12px 16px;font-size:.9rem;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)";document.body.appendChild(e);}e.textContent="📡 مفيش اتصال بالإنترنت — اتأكد من النت وجرّب تاني / You're offline";}window.addEventListener("offline",s);window.addEventListener("online",s);s();})();</script>
 </body>
 </html>
