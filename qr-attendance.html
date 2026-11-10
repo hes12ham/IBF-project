@@ -274,7 +274,7 @@ new MutationObserver(ms=>{for(const m of ms)m.addedNodes.forEach(walk);}).observ
 window.ibfRetranslate();
 })();
 
-(function(){const b=document.createElement("button");b.id="ibfLangBtn";b.setAttribute("data-notr","1");b.style.cssText="position:fixed;top:10px;inset-inline-end:10px;z-index:9999;padding:6px 14px;border-radius:20px;border:1px solid #17bdef;background:#fff;color:#0b7fa6;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.12)";
+(function(){const b=document.createElement("button");b.id="ibfLangBtn";b.setAttribute("data-notr","1");b.style.cssText="position:fixed;top:10px;inset-inline-end:10px;z-index:9999;padding:6px 14px;min-height:44px;border-radius:22px;border:1px solid #14bef0;background:#fff;color:#006f90;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.12)";
 const apply=()=>{const L=localStorage.getItem("ibf:lang")||"ar";document.documentElement.lang=L;document.documentElement.dir=L==="ar"?"rtl":"ltr";b.textContent=L==="ar"?"English":"عربي";if(window.ibfRetranslate)window.ibfRetranslate();};
 b.onclick=()=>{try{localStorage.setItem("ibf:lang",(localStorage.getItem("ibf:lang")||"ar")==="ar"?"en":"ar");}catch(e){console.warn("[IBF]",e);}apply();};document.body.appendChild(b);apply();})();
 
