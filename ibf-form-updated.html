@@ -121,6 +121,30 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-he
 [data-theme="dark"] .theme-toggle{background:#4D9FEC}
 .hdr-logo{position:relative;z-index:1;display:block;width:min(260px,70vw);height:auto;margin:0 auto 12px}
 html[lang=en] .hdr-logo{content:url(assets/brand/logo-en-w.png)}
+
+/* selected-option check mark */
+.f .ri input[type=radio],.f .sp input[type=radio]{appearance:none;-webkit-appearance:none;width:24px;height:24px;min-width:24px;padding:0;margin:0;border:2px solid var(--bdr);border-radius:7px;background:var(--w);display:inline-grid;place-content:center;cursor:pointer;transition:background .15s,border-color .15s;box-shadow:none}
+.f .ri input[type=radio]::after,.f .sp input[type=radio]::after{content:"";width:12px;height:7px;border-left:3px solid #fff;border-bottom:3px solid #fff;transform:rotate(-45deg) translate(1px,-1px);opacity:0;transition:opacity .15s}
+.f .ri input[type=radio]:checked,.f .sp input[type=radio]:checked,.f .ri.sel input[type=radio],.f .sp.sel input[type=radio]{background:var(--p);border-color:var(--p)}
+.f .ri input[type=radio]:checked::after,.f .sp input[type=radio]:checked::after,.f .ri.sel input[type=radio]::after,.f .sp.sel input[type=radio]::after{opacity:1}
+.f .ri input[type=radio]:focus-visible,.f .sp input[type=radio]:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.ri.sel,.sp.sel{border-width:2px}
+/* ID photos front + back */
+.idg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:420px){.idg{grid-template-columns:1fr}}
+.f .idbox{position:relative;margin:0;font-weight:400;border:2px dashed var(--bdr);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;background:var(--bg);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:border-color .2s,background .2s}
+.idbox:hover{border-color:var(--p);background:var(--pl)}
+.idbox input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.f .idbox .idt{font-weight:700;font-size:14px}
+.f .idbox .ids{display:block;font-size:11px;color:var(--muted)}
+.idbox img{max-width:100%;max-height:110px;border-radius:8px;object-fit:contain;display:none}
+.idbox.has{border-style:solid;border-color:var(--p)}
+.idbox.has img{display:block}
+.idbox.has .idi{display:none}
+.idbox.has::after{content:"✓";position:absolute;top:8px;inset-inline-end:8px;width:24px;height:24px;border-radius:50%;background:var(--p);color:#fff;font-weight:900;display:grid;place-content:center;font-size:14px}
+.idbox.bad{border-color:var(--acc)}
+.idbox:focus-within{outline:2px solid var(--p);outline-offset:2px}
+[data-theme="dark"] .idbox{background:#13161f;border-color:#2D3748}
 </style>
 </head>
 <body>
@@ -185,15 +209,13 @@ html[lang=en] .hdr-logo{content:url(assets/brand/logo-en-w.png)}
       <div class="em" id="e-nationalId">الرقم القومي 14 رقم / ID must be 14 digits</div>
     </div>
     <div class="f">
-      <label>صورة البطاقة / ID Photo (Front & Back) <span class="req">*</span></label>
-      <div class="farea" id="farea" onclick="document.getElementById('idPhoto').click()">
-        <div class="fi">📎</div>
-        <p>اضغط لرفع الصورة / Click to upload</p>
-        <p style="font-size:11px;margin-top:3px;color:#9CA3AF">JPG, PNG • يمكن اختيار أكثر من صورة</p>
-        <div class="fn" id="fn"></div>
-        <input type="file" id="idPhoto" accept="image/*" multiple onchange="handleFile(this)"/>
+      <label>صورة البطاقة — الوش والضهر / ID card — front and back <span class="req">*</span></label>
+      <div class="idg">
+        <label class="idbox" id="box-front"><input type="file" id="idFront" accept="image/*" onchange="handleId(this,'front')" aria-label="صورة وش البطاقة / ID front"/><span class="idi" style="font-size:28px" aria-hidden="true">🪪</span><span class="idt">وش البطاقة / Front</span><span class="ids">اضغط لرفع الصورة / Tap to upload</span><img alt="وش البطاقة / ID front"><span class="ids fn"></span></label>
+        <label class="idbox" id="box-back"><input type="file" id="idBack" accept="image/*" onchange="handleId(this,'back')" aria-label="صورة ضهر البطاقة / ID back"/><span class="idi" style="font-size:28px" aria-hidden="true">🔄</span><span class="idt">ضهر البطاقة / Back</span><span class="ids">اضغط لرفع الصورة / Tap to upload</span><img alt="ضهر البطاقة / ID back"><span class="ids fn"></span></label>
       </div>
-      <div class="em" id="e-file">يرجى رفع صورة البطاقة / Please upload ID photo</div>
+      <div class="em" id="e-file">لازم ترفع صورة وش البطاقة وصورة ضهرها / Upload both the front and the back of your ID</div>
+    </div>
     </div>
     <div class="g2">
       <div class="f">
@@ -398,12 +420,16 @@ function toggleMed(show){
 }
 
 /* ★ FIX: store actual files for Cloudinary upload */
-function handleFile(inp){
-  const files = Array.from(inp.files);
-  document.getElementById('fn').textContent = files.map(f=>f.name).join('، ');
-  window._photoFiles = files.map(f => ({name: f.name, data: f}));
-  document.getElementById('farea').style.borderColor='';
-  document.getElementById('e-file').classList.remove('on');
+window._idFiles={front:null,back:null};
+function handleId(inp,side){
+  const f=inp.files&&inp.files[0];const box=document.getElementById('box-'+side);
+  window._idFiles[side]=f?{name:(side==='front'?'front_':'back_')+f.name,data:f}:null;
+  box.classList.toggle('has',!!f);box.classList.remove('bad');
+  const img=box.querySelector('img');if(img._u)URL.revokeObjectURL(img._u);
+  if(f){img._u=URL.createObjectURL(f);img.src=img._u;}else{img.removeAttribute('src');}
+  box.querySelector('.fn').textContent=f?f.name:'';
+  window._photoFiles=[window._idFiles.front,window._idFiles.back].filter(Boolean);
+  if(window._idFiles.front&&window._idFiles.back)document.getElementById('e-file').classList.remove('on');
   up();
 }
 
@@ -419,7 +445,7 @@ function up(){
     document.getElementById('age').value,
     document.getElementById('gov').value,
     document.getElementById('nationalId').value.trim(),
-    document.getElementById('idPhoto').files.length>0?'ok':'',
+    (window._idFiles&&window._idFiles.front&&window._idFiles.back)?'ok':'',
     document.getElementById('whatsapp').value.trim(),
     document.getElementById('edu').value,
     document.querySelector('input[name=volType]:checked')?'ok':'',
@@ -483,9 +509,10 @@ async function submit(){
     alert('اختر التخصص الطبي / Select medical specialty.');return;
   }
 
-  if(!window._photoFiles || window._photoFiles.length===0){
+  if(!window._idFiles || !window._idFiles.front || !window._idFiles.back){
     ok=false;
-    document.getElementById('farea').style.borderColor='var(--acc)';
+    if(!window._idFiles||!window._idFiles.front)document.getElementById('box-front').classList.add('bad');
+    if(!window._idFiles||!window._idFiles.back)document.getElementById('box-back').classList.add('bad');
     document.getElementById('e-file').classList.add('on');
   }
 
